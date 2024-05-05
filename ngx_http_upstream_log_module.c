@@ -93,14 +93,14 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_LOG_SEND_END_TS           3
 #define NGX_HTTP_UPSTREAM_LOG_HEADER_TS             4
 #define NGX_HTTP_UPSTREAM_LOG_END_TS                5
-*/
+
 #define NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME          0
 #define NGX_HTTP_UPSTREAM_LOG_SSL_TIME              1
 #define NGX_HTTP_UPSTREAM_LOG_SEND_TIME             2
 #define NGX_HTTP_UPSTREAM_LOG_READ_TIME             3
 #define NGX_HTTP_UPSTREAM_LOG_HEADER_TIME           4
 #define NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME         5
-
+*/
 #define NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH       0
 #define NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED        1
 #define NGX_HTTP_UPSTREAM_LOG_BYTES_SENT            2
@@ -924,7 +924,6 @@ static ngx_int_t
 ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
-    ngx_uint_t                  len;
     ngx_http_upstream_t        *u;
     ngx_http_upstream_state_t  *state;
 
