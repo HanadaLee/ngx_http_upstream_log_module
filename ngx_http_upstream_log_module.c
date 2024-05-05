@@ -873,11 +873,12 @@ static ngx_int_t
 ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
-    ngx_http_upstream_state_t  *state;
     ngx_http_upstream_t        *u;
+    ngx_http_upstream_state_t  *state;
 
     u = r->upstream;
-    if (u != NULL && u->state && u->state->peer) {
+
+    if (u && u->state && u->state->peer) {
         v->len = u->state->peer->len;
         v->data = ngx_pnalloc(r->pool, v->len);
         if (v->data == NULL) {
@@ -921,10 +922,13 @@ ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
     ngx_uint_t                  len;
+    ngx_http_upstream_t        *u;
     ngx_http_upstream_state_t  *state;
 
-    if (r->u && r->u->state && r->u->state->status) {
-        state = r->u->state;
+    u = r->upstream;
+
+    if (u && u->state && u->state->status) {
+        state = u->state;
 
     } else {
         if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
