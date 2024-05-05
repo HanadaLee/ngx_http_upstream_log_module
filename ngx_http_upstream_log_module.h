@@ -13,6 +13,6 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r, ngx_http_upstream_t *u);
+ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r);
 
 #endif /* _NGX_HTTP_UPSTREAM_LOG_MODULE_H_INCLUDED_ */
