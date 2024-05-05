@@ -86,14 +86,14 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_DEFAULT        0
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_JSON           1
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_NONE           2
-
+/*
 #define NGX_HTTP_UPSTREAM_LOG_START_TS              0
 #define NGX_HTTP_UPSTREAM_LOG_SSL_START_TS          1
 #define NGX_HTTP_UPSTREAM_LOG_SEND_START_TS         2
 #define NGX_HTTP_UPSTREAM_LOG_SEND_END_TS           3
 #define NGX_HTTP_UPSTREAM_LOG_HEADER_TS             4
 #define NGX_HTTP_UPSTREAM_LOG_END_TS                5
-
+*/
 #define NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME          0
 #define NGX_HTTP_UPSTREAM_LOG_SSL_TIME              1
 #define NGX_HTTP_UPSTREAM_LOG_SEND_TIME             2
@@ -128,10 +128,13 @@ static ngx_int_t ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
+/*
 static ngx_int_t ngx_http_upstream_log_ts_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
+
 static ngx_int_t ngx_http_upstream_log_time_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
+*/
 static ngx_int_t ngx_http_upstream_log_response_length_variable(
     ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
 
@@ -244,7 +247,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
     { ngx_string("upstream_log_status"), NULL,
       ngx_http_upstream_log_status_variable, 0,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-
+/*
     { ngx_string("upstream_log_start_ts"), NULL,
       ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_START_TS,
@@ -304,7 +307,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-
+*/
     { ngx_string("upstream_log_response_length"), NULL,
       ngx_http_upstream_log_response_length_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH,
@@ -957,7 +960,7 @@ ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     return NGX_OK;
 }
 
-
+/*
 static ngx_int_t
 ngx_http_upstream_log_ts_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
@@ -1140,7 +1143,7 @@ ngx_http_upstream_log_time_variable(ngx_http_request_t *r,
 
     return NGX_OK;
 }
-
+*/
 
 static ngx_int_t
 ngx_http_upstream_log_response_length_variable(ngx_http_request_t *r,
