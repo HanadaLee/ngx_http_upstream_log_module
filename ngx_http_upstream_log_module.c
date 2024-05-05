@@ -246,62 +246,62 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_start_ts"), NULL,
-      ngx_http_upstream_log_response_ts_variable,
+      ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_ssl_start_ts"), NULL,
-      ngx_http_upstream_log_response_ts_variable,
+      ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_send_start_ts"), NULL,
-      ngx_http_upstream_log_response_ts_variable,
+      ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SEND_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_send_end_ts"), NULL,
-      ngx_http_upstream_log_response_ts_variable,
+      ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SEND_END_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_header_ts"), NULL,
-      ngx_http_upstream_log_response_ts_variable,
+      ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_HEADER_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_end_ts"), NULL,
-      ngx_http_upstream_log_response_ts_variable,
+      ngx_http_upstream_log_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_END_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_connect_time"), NULL,
-      ngx_http_upstream_log_response_time_variable,
+      ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_ssl_time"), NULL,
-      ngx_http_upstream_log_response_time_variable,
+      ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_send_time"), NULL,
-      ngx_http_upstream_log_response_time_variable,
+      ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_SEND_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_read_time"), NULL,
-      ngx_http_upstream_log_response_time_variable,
+      ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_READ_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_header_time"), NULL,
-      ngx_http_upstream_log_response_time_variable,
+      ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_HEADER_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_response_time"), NULL,
-      ngx_http_upstream_log_response_time_variable,
+      ngx_http_upstream_log_time_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
@@ -321,7 +321,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
       ngx_http_null_variable
-}
+};
 
 
 static ngx_str_t  ngx_http_upstream_log = ngx_string(NGX_HTTP_LOG_PATH);
