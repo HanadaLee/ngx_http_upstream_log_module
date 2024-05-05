@@ -257,7 +257,7 @@ static ngx_http_upstream_log_var_t  ngx_http_upstream_log_vars[] = {
 };
 
 
-ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r, ngx_http_upstream_t *u) {
+ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
     u_char                   *line, *p;
     size_t                    len, size;
     ssize_t                   n;

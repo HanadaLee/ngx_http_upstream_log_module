@@ -1,0 +1,25 @@
+diff --git a/src/http/ngx_http_upstream.c b/src/http/ngx_http_upstream.c
+index 2be233c..a3a32b1 100644
+--- a/src/http/ngx_http_upstream.c
++++ b/src/http/ngx_http_upstream.c
+@@ -9,6 +9,9 @@
+ #include <ngx_core.h>
+ #include <ngx_http.h>
+ 
++#if (NGX_HTTP_UPSTREAM_LOG)
++#include "ngx_http_upstream_log_module.h"
++#endif
+ 
+ #if (NGX_HTTP_CACHE)
+ static ngx_int_t ngx_http_upstream_cache(ngx_http_request_t *r,
+@@ -4535,6 +4538,10 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
+ 
+     u->finalize_request(r, rc);
+ 
++#if (NGX_HTTP_UPSTREAM_LOG)
++    ngx_http_upstream_log_handler(r);
++#endif
++
+     if (u->peer.free && u->peer.sockaddr) {
+         u->peer.free(&u->peer, u->peer.data, 0);
+         u->peer.sockaddr = NULL;
