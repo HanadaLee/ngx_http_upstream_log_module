@@ -931,17 +931,17 @@ ngx_http_upstream_log_variable_compile(ngx_conf_t *cf, ngx_http_upstream_log_op_
     op->len = 0;
 
     switch (escape) {
-    case NGX_HTTP_LOG_ESCAPE_JSON:
+    case NGX_HTTP_UPSTREAM_LOG_ESCAPE_JSON:
         op->getlen = ngx_http_upstream_log_json_variable_getlen;
         op->run = ngx_http_upstream_log_json_variable;
         break;
 
-    case NGX_HTTP_LOG_ESCAPE_NONE:
+    case NGX_HTTP_UPSTREAM_LOG_ESCAPE_NONE:
         op->getlen = ngx_http_upstream_log_unescaped_variable_getlen;
         op->run = ngx_http_upstream_log_unescaped_variable;
         break;
 
-    default: /* NGX_HTTP_LOG_ESCAPE_DEFAULT */
+    default: /* NGX_HTTP_UPSTREAM_LOG_ESCAPE_DEFAULT */
         op->getlen = ngx_http_upstream_log_variable_getlen;
         op->run = ngx_http_upstream_log_variable;
     }
@@ -1238,7 +1238,7 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_memzero(log, sizeof(ngx_http_upstream_log_t));
 
-    log->file = ngx_conf_open_file(cf->cycle, &ngx_http_access_log);
+    log->file = ngx_conf_open_file(cf->cycle, &ngx_http_upstream_log);
     if (log->file == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -1609,17 +1609,17 @@ ngx_http_upstream_log_compile_format(ngx_conf_t *cf, ngx_array_t *flushes,
     ngx_http_upstream_log_op_t   *op;
     ngx_http_upstream_log_var_t  *v;
 
-    escape = NGX_HTTP_LOG_ESCAPE_DEFAULT;
+    escape = NGX_HTTP_UPSTREAM_LOG_ESCAPE_DEFAULT;
     value = args->elts;
 
     if (s < args->nelts && ngx_strncmp(value[s].data, "escape=", 7) == 0) {
         data = value[s].data + 7;
 
         if (ngx_strcmp(data, "json") == 0) {
-            escape = NGX_HTTP_LOG_ESCAPE_JSON;
+            escape = NGX_HTTP_UPSTREAM_LOG_ESCAPE_JSON;
 
         } else if (ngx_strcmp(data, "none") == 0) {
-            escape = NGX_HTTP_LOG_ESCAPE_NONE;
+            escape = NGX_HTTP_UPSTREAM_LOG_ESCAPE_NONE;
 
         } else if (ngx_strcmp(data, "default") != 0) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -1892,7 +1892,7 @@ ngx_http_upstream_log_init(ngx_conf_t *cf)
     /*ngx_http_handler_pt        *h;*/
     ngx_http_upstream_log_fmt_t         *fmt;
     ngx_http_upstream_log_main_conf_t   *lmcf;
-    ngx_http_core_main_conf_t  *cmcf;
+    /*ngx_http_core_main_conf_t  *cmcf;*/
 
     lmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_upstream_log_module);
 
