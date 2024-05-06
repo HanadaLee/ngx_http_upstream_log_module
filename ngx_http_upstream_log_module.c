@@ -86,24 +86,24 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_DEFAULT        0
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_JSON           1
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_NONE           2
-/*
-#define NGX_HTTP_UPSTREAM_LOG_START_TS              0
-#define NGX_HTTP_UPSTREAM_LOG_SSL_START_TS          1
-#define NGX_HTTP_UPSTREAM_LOG_SEND_START_TS         2
-#define NGX_HTTP_UPSTREAM_LOG_SEND_END_TS           3
-#define NGX_HTTP_UPSTREAM_LOG_HEADER_TS             4
-#define NGX_HTTP_UPSTREAM_LOG_END_TS                5
 
-#define NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME          0
-#define NGX_HTTP_UPSTREAM_LOG_SSL_TIME              1
-#define NGX_HTTP_UPSTREAM_LOG_SEND_TIME             2
-#define NGX_HTTP_UPSTREAM_LOG_READ_TIME             3
-#define NGX_HTTP_UPSTREAM_LOG_HEADER_TIME           4
-#define NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME         5
-*/
-#define NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH       0
-#define NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED        1
-#define NGX_HTTP_UPSTREAM_LOG_BYTES_SENT            2
+#define NGX_HTTP_UPSTREAM_LOG_START_TS              10
+#define NGX_HTTP_UPSTREAM_LOG_SSL_START_TS          11
+#define NGX_HTTP_UPSTREAM_LOG_SEND_START_TS         12
+#define NGX_HTTP_UPSTREAM_LOG_SEND_END_TS           13
+#define NGX_HTTP_UPSTREAM_LOG_HEADER_TS             14
+#define NGX_HTTP_UPSTREAM_LOG_END_TS                15
+
+#define NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME          20
+#define NGX_HTTP_UPSTREAM_LOG_SSL_TIME              21
+#define NGX_HTTP_UPSTREAM_LOG_SEND_TIME             22
+#define NGX_HTTP_UPSTREAM_LOG_READ_TIME             23
+#define NGX_HTTP_UPSTREAM_LOG_HEADER_TIME           24
+#define NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME         25
+
+#define NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH       30
+#define NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED        31
+#define NGX_HTTP_UPSTREAM_LOG_BYTES_SENT            32
 
 
 static void ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_upstream_log_t *log,
@@ -128,13 +128,14 @@ static ngx_int_t ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
-/*
-static ngx_int_t ngx_http_upstream_log_ts_variable(ngx_http_request_t *r,
+static ngx_int_t ngx_http_upstream_log_multi_ts_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
-
-static ngx_int_t ngx_http_upstream_log_time_variable(ngx_http_request_t *r,
+static ngx_int_t ngx_http_upstream_log_single_ts_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
-*/
+static ngx_int_t ngx_http_upstream_log_multi_time_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
+static ngx_int_t ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_response_length_variable(
     ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
 
@@ -247,67 +248,133 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
     { ngx_string("upstream_log_status"), NULL,
       ngx_http_upstream_log_status_variable, 0,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-/*
-    { ngx_string("upstream_log_start_ts"), NULL,
-      ngx_http_upstream_log_ts_variable,
+
+    { ngx_string("upstream_start_ts"), NULL,
+      ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_ssl_start_ts"), NULL,
-      ngx_http_upstream_log_ts_variable,
+    { ngx_string("upstream_log_start_ts"), NULL,
+      ngx_http_upstream_log_single_ts_variable,
+      NGX_HTTP_UPSTREAM_LOG_START_TS,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_ssl_start_ts"), NULL,
+      ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_send_start_ts"), NULL,
-      ngx_http_upstream_log_ts_variable,
+    { ngx_string("upstream_log_ssl_start_ts"), NULL,
+      ngx_http_upstream_log_single_ts_variable,
+      NGX_HTTP_UPSTREAM_LOG_SSL_START_TS,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_send_start_ts"), NULL,
+      ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SEND_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_send_end_ts"), NULL,
-      ngx_http_upstream_log_ts_variable,
+    { ngx_string("upstream_log_send_start_ts"), NULL,
+      ngx_http_upstream_log_single_ts_variable,
+      NGX_HTTP_UPSTREAM_LOG_SEND_START_TS,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_send_end_ts"), NULL,
+      ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SEND_END_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_header_ts"), NULL,
-      ngx_http_upstream_log_ts_variable,
+    { ngx_string("upstream_log_send_end_ts"), NULL,
+      ngx_http_upstream_log_single_ts_variable,
+      NGX_HTTP_UPSTREAM_LOG_SEND_END_TS,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_header_ts"), NULL,
+      ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_HEADER_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_end_ts"), NULL,
-      ngx_http_upstream_log_ts_variable,
+    { ngx_string("upstream_log_header_ts"), NULL,
+      ngx_http_upstream_log_single_ts_variable,
+      NGX_HTTP_UPSTREAM_LOG_HEADER_TS,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_end_ts"), NULL,
+      ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_END_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
+    { ngx_string("upstream_log_end_ts"), NULL,
+      ngx_http_upstream_log_single_ts_variable,
+      NGX_HTTP_UPSTREAM_LOG_END_TS,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    /*
+    { ngx_string("upstream_connect_time"), NULL,
+      ngx_http_upstream_log_multi_time_variable,
+      NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+    */
+
     { ngx_string("upstream_log_connect_time"), NULL,
-      ngx_http_upstream_log_time_variable,
+      ngx_http_upstream_log_single_time_variable,
       NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_ssl_time"), NULL,
-      ngx_http_upstream_log_time_variable,
+    { ngx_string("upstream_ssl_time"), NULL,
+      ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_send_time"), NULL,
-      ngx_http_upstream_log_time_variable,
+    { ngx_string("upstream_log_ssl_time"), NULL,
+      ngx_http_upstream_log_single_time_variable,
+      NGX_HTTP_UPSTREAM_LOG_SSL_TIME,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_send_time"), NULL,
+      ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_SEND_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_read_time"), NULL,
-      ngx_http_upstream_log_time_variable,
+    { ngx_string("upstream_log_send_time"), NULL,
+      ngx_http_upstream_log_single_time_variable,
+      NGX_HTTP_UPSTREAM_LOG_SEND_TIME,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_read_time"), NULL,
+      ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_READ_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
+    { ngx_string("upstream_log_read_time"), NULL,
+      ngx_http_upstream_log_single_time_variable,
+      NGX_HTTP_UPSTREAM_LOG_READ_TIME,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+/*
+    { ngx_string("upstream_header_time"), NULL,
+      ngx_http_upstream_log_multi_time_variable,
+      NGX_HTTP_UPSTREAM_LOG_HEADER_TIME,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+*/
+
     { ngx_string("upstream_log_header_time"), NULL,
-      ngx_http_upstream_log_time_variable,
+      ngx_http_upstream_log_single_time_variable,
       NGX_HTTP_UPSTREAM_LOG_HEADER_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_log_response_time"), NULL,
-      ngx_http_upstream_log_time_variable,
+/*
+    { ngx_string("upstream_response_time"), NULL,
+      ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 */
+
+    { ngx_string("upstream_log_response_time"), NULL,
+      ngx_http_upstream_log_single_time_variable,
+      NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
     { ngx_string("upstream_log_response_length"), NULL,
       ngx_http_upstream_log_response_length_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH,
@@ -847,7 +914,7 @@ static void
 ngx_http_upstream_log_flush_handler(ngx_event_t *ev)
 {
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                   "http log buffer flush handler");
+                   "http upstream log buffer flush handler");
 
     ngx_http_upstream_log_flush(ev->data, ev->log);
 }
@@ -876,18 +943,18 @@ static ngx_int_t
 ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
-    ngx_http_upstream_t        *u;
     ngx_http_upstream_state_t  *state;
 
-    u = r->upstream;
-
-    if (u && u->state && u->state->peer) {
-        v->len = u->state->peer->len;
+    if (r->upstream && r->upstream->state && r->upstream->state->peer) {
+        v->len = r->upstream->state->peer->len;
         v->data = ngx_pnalloc(r->pool, v->len);
         if (v->data == NULL) {
             return NGX_ERROR;
         }
-        ngx_memcpy(v->data, u->state->peer->data, v->len);
+        ngx_memcpy(v->data, r->upstream->state->peer->data, v->len);
+        v->valid = 1;
+        v->no_cacheable = 0;
+        v->not_found = 0;
         return NGX_OK;
     }
 
@@ -924,13 +991,10 @@ static ngx_int_t
 ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
-    ngx_http_upstream_t        *u;
     ngx_http_upstream_state_t  *state;
 
-    u = r->upstream;
-
-    if (u && u->state && u->state->status) {
-        state = u->state;
+    if (r->upstream && r->upstream->state && r->upstream->state->status) {
+        state = r->upstream->state;
 
     } else {
         if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
@@ -959,9 +1023,9 @@ ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
     return NGX_OK;
 }
 
-/*
+
 static ngx_int_t
-ngx_http_upstream_log_ts_variable(ngx_http_request_t *r,
+ngx_http_upstream_log_multi_ts_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
     u_char                     *p;
@@ -997,6 +1061,7 @@ ngx_http_upstream_log_ts_variable(ngx_http_request_t *r,
     for ( ;; ) {
 
         switch (data) {
+
         case NGX_HTTP_UPSTREAM_LOG_START_TS:
             ms = state[i].start_msec;
             break;
@@ -1067,7 +1132,89 @@ ngx_http_upstream_log_ts_variable(ngx_http_request_t *r,
 
 
 static ngx_int_t
-ngx_http_upstream_log_time_variable(ngx_http_request_t *r,
+ngx_http_upstream_log_single_ts_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    u_char                     *p;
+    ngx_time_t                 *tp;
+    ngx_uint_t                  len;
+    ngx_msec_t                  ms;
+    ngx_http_upstream_state_t  *state;
+
+    if (r->upstream && r->upstream->state) {
+        state = r->upstream->state;
+
+    } else {
+        if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
+            v->not_found = 1;
+            return NGX_OK;
+        }
+        state = r->upstream_states->elts;
+        state = &state[r->upstream_states->nelts - 1];
+    }
+
+    tp = ngx_timeofday();
+
+    len = NGX_TIME_T_LEN + 4;
+    p = ngx_pnalloc(r->pool, len);
+    if (p == NULL) {
+        return NGX_ERROR;
+    }
+    v->data = p;
+
+    switch (data) {
+
+    case NGX_HTTP_UPSTREAM_LOG_START_TS:
+        ms = state->start_msec;
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_SSL_START_TS:
+        ms = state->ssl_start_msec;
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_SEND_START_TS:
+        ms = state->send_start_msec;
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_SEND_END_TS:
+        ms = state->send_end_msec;
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_HEADER_TS:
+        if (state->header_time == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) -1;
+        } else {
+            ms = (ngx_msec_t) (state->start_msec + state->header_time);
+        }
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_END_TS:
+        ms = (ngx_msec_t) (state->start_msec + state->response_time);
+        break;
+
+    default:
+        v->not_found = 1;
+        return NGX_OK;
+    }
+
+    if (ms != (ngx_msec_t) -1) {
+        ms = (ngx_msec_t)(tp->sec * 1000 + tp->msec + ms - ngx_current_msec);
+        p = ngx_sprintf(p, "%T.%03M", (time_t) ms / 1000, ms % 1000);
+        v->len = p - v->data;
+    } else {
+        v->not_found = 1;
+    }
+
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_multi_time_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
     u_char                     *p;
@@ -1099,14 +1246,45 @@ ngx_http_upstream_log_time_variable(ngx_http_request_t *r,
 
     for ( ;; ) {
 
-        if (data == 1) {
-            ms = state[i].header_time;
+        switch (data) {
 
-        } else if (data == 2) {
-            ms = state[i].connect_time;
+        /* NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME */
 
-        } else {
-            ms = state[i].response_time;
+        case NGX_HTTP_UPSTREAM_LOG_SSL_TIME:
+            if (state[i].ssl_start_msec == (ngx_msec_t) -1) {
+                ms = (ngx_msec_t) -1;
+            } else if (state[i].send_start_msec == (ngx_msec_t) -1) {
+                ms = (ngx_msec_t) (state[i].start_msec + state[i].response_time - state[i].ssl_start_msec);
+            } else {
+                ms = (ngx_msec_t) (state[i].send_start_msec - state[i].ssl_start_msec);
+            }
+            break;
+
+        case NGX_HTTP_UPSTREAM_LOG_SEND_TIME:
+            if (state[i].send_start_msec == (ngx_msec_t) -1) {
+                ms = (ngx_msec_t) -1;
+            } else if (state[i].send_end_msec == (ngx_msec_t) -1) {
+                ms = (ngx_msec_t) (state[i].start_msec + state[i].response_time - state[i].send_start_msec);
+            } else {
+                ms = (ngx_msec_t) (state[i].send_end_msec - state[i].send_start_msec);
+            }
+            break;
+
+        case NGX_HTTP_UPSTREAM_LOG_READ_TIME:
+            if (state[i].send_end_msec == (ngx_msec_t) -1) {
+                ms = (ngx_msec_t) -1;
+            } else {
+                ms = (ngx_msec_t) (state[i].start_msec + state[i].response_time - state[i].send_end_msec);
+            }
+            break;
+
+        /* NGX_HTTP_UPSTREAM_LOG_HEADER_TIME */
+
+        /* NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME */
+
+        default:
+            v->not_found = 1;
+            return NGX_OK;
         }
 
         if (ms != -1) {
@@ -1142,72 +1320,148 @@ ngx_http_upstream_log_time_variable(ngx_http_request_t *r,
 
     return NGX_OK;
 }
-*/
+
 
 static ngx_int_t
-ngx_http_upstream_log_response_length_variable(ngx_http_request_t *r,
+ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
     u_char                     *p;
-    size_t                      len;
-    ngx_uint_t                  i;
+    ngx_msec_int_t              ms;
     ngx_http_upstream_state_t  *state;
+
+    if (r->upstream && r->upstream->state) {
+        state = r->upstream->state;
+
+    } else {
+        if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
+            v->not_found = 1;
+            return NGX_OK;
+        }
+        state = r->upstream_states->elts;
+        state = &state[r->upstream_states->nelts - 1];
+    }
+
+    switch (data) {
+
+    case NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME:
+        if (state.ssl_start_msec == (ngx_msec_t) -1) {
+            ms = state->connect_time;
+        } else {
+            ms = (ngx_msec_t) (state.ssl_start_msec - state.start_msec);
+        }
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_SSL_TIME:
+        if (state.ssl_start_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) -1;
+        } else if (state.send_start_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) (state.start_msec + state.response_time - state.ssl_start_msec);
+        } else {
+            ms = (ngx_msec_t) (state.send_start_msec - state.ssl_start_msec);
+        }
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_SEND_TIME:
+        if (state.send_start_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) -1;
+        } else if (state.send_end_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) (state.start_msec + state.response_time - state.send_start_msec);
+        } else {
+            ms = (ngx_msec_t) (state.send_end_msec - state.send_start_msec);
+        }
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_READ_TIME:
+        if (state.send_end_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) -1;
+        } else {
+            ms = (ngx_msec_t) (state.start_msec + state.response_time - state.send_end_msec);
+        }
+        break;
+
+    case NGX_HTTP_UPSTREAM_LOG_HEADER_TIME:
+        ms = state->header_time;
+        break;
+        
+    case NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME:
+        ms = state->response_time;
+        break;
+
+    default:
+        v->not_found = 1;
+        return NGX_OK;
+    }
+
+    if (ms != -1) {
+        ms = ngx_max(ms, 0);
+        p = ngx_pnalloc(r->pool, NGX_TIME_T_LEN + 4);
+        if (p == NULL) {
+            return NGX_ERROR;
+        }
+        v->data = p;
+        p = ngx_sprintf(p, "%T.%03M", (time_t) ms / 1000, ms % 1000);
+        v->len = p - v->data;
+    } else {
+        v->not_found = 1;
+    }
 
     v->valid = 1;
     v->no_cacheable = 0;
     v->not_found = 0;
 
-    if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
-        v->not_found = 1;
-        return NGX_OK;
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_response_length_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_state_t *state;
+    u_char *p;
+
+    if (r->upstream && r->upstream->state) {
+        state = r->upstream->state;
+
+    } else {
+        if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
+            v->not_found = 1;
+            return NGX_OK;
+        }
+        state = r->upstream_states->elts;
+        state = &state[r->upstream_states->nelts - 1];
     }
 
-    len = r->upstream_states->nelts * (NGX_OFF_T_LEN + 2);
-
-    p = ngx_pnalloc(r->pool, len);
+    p = ngx_pnalloc(r->pool, NGX_OFF_T_LEN);
     if (p == NULL) {
         return NGX_ERROR;
     }
 
-    v->data = p;
+    switch(data) {
 
-    i = 0;
-    state = r->upstream_states->elts;
+    case NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED:
+        p = ngx_sprintf(p, "%O", state->bytes_received);
+        break;
+    
+    case NGX_HTTP_UPSTREAM_LOG_BYTES_SENT:
+        p = ngx_sprintf(p, "%O", state->bytes_sent);
+        break;
 
-    for ( ;; ) {
+    case NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH:
+        p = ngx_sprintf(p, "%O", state->response_length);
+        break;
 
-        if (data == 1) {
-            p = ngx_sprintf(p, "%O", state[i].bytes_received);
-
-        } else if (data == 2) {
-            p = ngx_sprintf(p, "%O", state[i].bytes_sent);
-
-        } else {
-            p = ngx_sprintf(p, "%O", state[i].response_length);
-        }
-
-        if (++i == r->upstream_states->nelts) {
-            break;
-        }
-
-        if (state[i].peer) {
-            *p++ = ',';
-            *p++ = ' ';
-
-        } else {
-            *p++ = ' ';
-            *p++ = ':';
-            *p++ = ' ';
-
-            if (++i == r->upstream_states->nelts) {
-                break;
-            }
-
-            continue;
-        }
+    default:
+        v->not_found = 1;
+        return NGX_OK;
     }
 
     v->len = p - v->data;
+    v->data = p - v->len;
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
 
     return NGX_OK;
 }

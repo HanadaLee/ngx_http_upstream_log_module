@@ -1,93 +1,159 @@
-# ngx_http_upstream_log_module
+# name
 
+ngx_http_upstream_log_module
 
+The ngx_http_upstream_log_module module writes upstream request logs in the specified format, like ngx_http_log_module.
+Most of the work of this module originates from ngx_http_log_module.
 
-## Getting started
+# Description
+Unlike the access log module, it will be logged at the end of each upstream request. If several servers were contacted during request processing, an upstream log is recorded at the end of each contact. If an internal redirect from one server group to another happens, initiated by “X-Accel-Redirect” or error_page, an upstream log will also be recorded at the end of each contact.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+This module also provides a series of variables for upstream logging. Most of them start with $upstream_log_, which is used to distinguish them from the variables in ngx_http_upstream_module. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The usage of this module is very similar to ngx_http_log_module. For example, use the upstream_log_format directive to specify the format of the upstream log. Use the upstream_log directive to sets the path, format, and configuration for a buffered log write.
 
-## Add your files
+# Status
+This Nginx module is currently considered experimental. Issues and PRs are welcome if you encounter any problems.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+# Synopsis
 
 ```
-cd existing_repo
-git remote add origin https://git.hanada.info/hanada/ngx_http_upstream_log_module.git
-git branch -M main
-git push -uf origin main
+    http {
+
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+
+        upstream_log_format main '$remote_addr $upstream_log_addr [$time_local] "$request" '
+                                 '$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received'
+                                 '$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time';
+
+        upstream cluster {
+            server 192.168.0.1:80;
+            server 192.168.0.2:80;
+        }
+
+        server {
+            listen 80;
+
+            access_log logs/access.log main;
+	        upstream_log logs/upstream.log main;
+
+            location / {
+                proxy_pass http://cluster;
+            }
+        }
+
+    }
 ```
 
-## Integrate with your tools
+# Installation
 
-- [ ] [Set up project integrations](https://git.hanada.info/hanada/ngx_http_upstream_log_module/-/settings/integrations)
+> Todo
 
-## Collaborate with your team
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+# Directive
 
-## Test and Deploy
+### upstream_log
+* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]]; upstream_log off;
+* Default:	upstream_log logs/upstream.log combined;
+* Context:	http, server, location, if in location, limit_except
 
-Use the built-in continuous integration in GitLab.
+Sets the path, format, and configuration for a buffered log write. Several logs can be specified on the same configuration level. Logging to syslog can be configured by specifying the “syslog:” prefix in the first parameter. The special value off cancels all upstream_log directives on the current level. If the format is not specified then the predefined “combined” format is used.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+If either the buffer or gzip parameter is used, writes to log will be buffered.
 
-***
+> The buffer size must not exceed the size of an atomic write to a disk file. For FreeBSD this size is unlimited.
 
-# Editing this README
+When buffering is enabled, the data will be written to the file:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+* if the next log line does not fit into the buffer;
+* if the buffered data is older than specified by the flush parameter;
+* when a worker process is re-opening log files or is shutting down.
+If the gzip parameter is used, then the buffered data will be compressed before writing to the file. The compression level can be set between 1 (fastest, less compression) and 9 (slowest, best compression). By default, the buffer size is equal to 64K bytes, and the compression level is set to 1. Since the data is compressed in atomic blocks, the log file can be decompressed or read by “zcat” at any time.
 
-## Suggestions for a good README
+Example:
+```
+upstream_log /path/to/log.gz combined gzip flush=5m;
+```
+> For gzip compression to work, nginx must be built with the zlib library.
+The file path can contain variables, but such logs have some constraints:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+* the user whose credentials are used by worker processes should have permissions to create files in a directory with such logs;
+* buffered writes do not work;
+* the file is opened and closed for each log write. However, since the descriptors of frequently used files can be stored in a cache, writing to the old file can continue during the time specified by the open_log_file_cache directive’s valid parameter
+* during each log write the existence of the request’s root directory is checked, and if it does not exist the log is not created. It is thus a good idea to specify both root and upstream_log on the same configuration level:
+```
+server {
+    root         /spool/vhost/data/$host;
+    upstream_log /spool/vhost/logs/$host;
+    ...
+```
+The if parameter enables conditional logging. A request will not be logged if the condition evaluates to “0” or an empty string. In the following example, the requests with response codes 2xx and 3xx will not be logged:
+```
+map $upstream_log_status $upstream_loggable {
+    ~^[23]  0;
+    default 1;
+}
 
-## Name
-Choose a self-explaining name for your project.
+upstream_log /path/to/upstream.log combined if=$upstream_loggable;
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### upstream_log_format
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+* Syntax:	upstream_log_format name [escape=default|json|none] string ...;
+* Default:	upstream_log_format combined "...";
+* Context:	http
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Specifies log format.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Format names can duplicate those defined by log_format, but this is generally not recommended.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+The escape parameter allows setting json or default characters escaping in variables, by default, default escaping is used. The none value disables escaping.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+For default escaping, characters “"”, “\”, and other characters with values less than 32 or above 126 are escaped as “\xXX”. If the variable value is not found, a hyphen (“-”) will be logged.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+For json escaping, all characters not allowed in JSON strings will be escaped: characters “"” and “\” are escaped as “\"” and “\\\”, characters with values less than 32 are escaped as “\n”, “\r”, “\t”, “\b”, “\f”, or “\u00XX”.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+The configuration always includes the predefined “combined” format:
+```
+upstream_log_format combined '$remote_addr - $remote_user [$time_local] '
+                    '"$request" $status $body_bytes_sent '
+                    '"$http_referer" "$http_user_agent"';
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### open_log_file_cache
+* Syntax:	open_log_file_cache max=N [inactive=time] [min_uses=N] [valid=time]; open_log_file_cache off;
+* Default:	open_log_file_cache off;
+* Context:	http, server, location
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Defines a cache that stores the file descriptors of frequently used logs whose names contain variables. The directive has the following parameters:
 
-## License
-For open source projects, say how it is licensed.
+* max
+sets the maximum number of descriptors in a cache; if the cache becomes full the least recently used (LRU) descriptors are closed
+* inactive
+sets the time after which the cached descriptor is closed if there were no access during this time; by default, 10 seconds
+* min_uses
+sets the minimum number of file uses during the time defined by the inactive parameter to let the descriptor stay open in a cache; by default, 1
+* valid
+sets the time after which it should be checked that the file still exists with the same name; by default, 60 seconds
+* off
+disables caching
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Usage example:
+```
+open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
+```
+
+
+# Variable
+
+> Todo
+
+# Authors
+
+Hanada im@hanada.info
+
+# License
+This Nginx module is licensed under BSD 2-Clause License.
