@@ -1,4 +1,4 @@
-# name
+# Name
 
 ngx_http_upstream_log_module
 
@@ -81,7 +81,7 @@ The file path can contain variables, but such logs have some constraints:
 
 * the user whose credentials are used by worker processes should have permissions to create files in a directory with such logs;
 * buffered writes do not work;
-* the file is opened and closed for each log write. However, since the descriptors of frequently used files can be stored in a cache, writing to the old file can continue during the time specified by the open_log_file_cache directive’s valid parameter
+* the file is opened and closed for each log write. However, since the descriptors of frequently used files can be stored in a cache, writing to the old file can continue during the time specified by the upstream_open_log_file_cache directive’s valid parameter
 * during each log write the existence of the request’s root directory is checked, and if it does not exist the log is not created. It is thus a good idea to specify both root and upstream_log on the same configuration level:
 ```
 server {
@@ -122,9 +122,9 @@ upstream_log_format combined '$remote_addr - $remote_user [$time_local] '
                     '"$http_referer" "$http_user_agent"';
 ```
 
-### open_log_file_cache
-* Syntax:	open_log_file_cache max=N [inactive=time] [min_uses=N] [valid=time]; open_log_file_cache off;
-* Default:	open_log_file_cache off;
+### upstream_open_log_file_cache
+* Syntax:	upstream_open_log_file_cache max=N [inactive=time] [min_uses=N] [valid=time]; upstream_open_log_file_cache off;
+* Default:	upstream_open_log_file_cache off;
 * Context:	http, server, location
 
 
@@ -143,7 +143,7 @@ disables caching
 
 Usage example:
 ```
-open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
+upstream_open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
 ```
 
 
