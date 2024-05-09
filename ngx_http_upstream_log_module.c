@@ -1290,6 +1290,7 @@ ngx_http_upstream_log_single_ts_variable(ngx_http_request_t *r,
 
     } else {
         v->not_found = 1;
+        return NGX_OK;
     }
 
     v->valid = 1;
@@ -1502,6 +1503,7 @@ ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
 
     } else {
         v->not_found = 1;
+        return NGX_OK;
     }
 
     v->valid = 1;
