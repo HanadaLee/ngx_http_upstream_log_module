@@ -1556,6 +1556,8 @@ ngx_http_upstream_log_response_length_variable(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
+    v->data = p;
+
     switch(data) {
 
     case NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED:
@@ -1576,7 +1578,6 @@ ngx_http_upstream_log_response_length_variable(ngx_http_request_t *r,
     }
 
     v->len = p - v->data;
-    v->data = p - v->len;
     v->valid = 1;
     v->no_cacheable = 0;
     v->not_found = 0;
