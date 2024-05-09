@@ -124,6 +124,12 @@ static void ngx_http_upstream_log_flush_handler(ngx_event_t *ev);
 
 
 static ngx_int_t ngx_http_upstream_log_add_variables(ngx_conf_t *cf);
+static ngx_int_t ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
+static ngx_int_t ngx_http_upstream_log_scheme_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
+static ngx_int_t ngx_http_upstream_log_uri_variable( ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
@@ -146,8 +152,8 @@ static size_t ngx_http_upstream_log_variable_getlen(ngx_http_request_t *r,
     uintptr_t data);
 static u_char *ngx_http_upstream_log_variable(ngx_http_request_t *r, u_char *buf,
     ngx_http_upstream_log_op_t *op);
-static uintptr_t ngx_http_upstream_log_escape(ngx_http_upstream_log_loc_conf_t *lcf, u_char *dst,
-    u_char *src, size_t size);
+static uintptr_t ngx_http_upstream_log_escape(ngx_http_upstream_log_loc_conf_t *lcf,
+    u_char *dst, u_char *src, size_t size);
 static size_t ngx_http_upstream_log_json_variable_getlen(ngx_http_request_t *r,
     uintptr_t data);
 static u_char *ngx_http_upstream_log_json_variable(ngx_http_request_t *r, u_char *buf,
@@ -240,6 +246,18 @@ ngx_module_t ngx_http_upstream_log_module = {
 
 
 static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
+
+    { ngx_string("upstream_method"), NULL, NULL,
+      ngx_http_upstream_log_method_variable, 0,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_scheme"), NULL, NULL,
+      ngx_http_upstream_log_scheme_variable, 0,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_uri"), NULL, NULL,
+      ngx_http_upstream_log_uri_variable, 0,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_log_addr"), NULL,
       ngx_http_upstream_log_addr_variable, 0,
@@ -554,8 +572,8 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
 
 
 static void
-ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_upstream_log_t *log, u_char *buf,
-    size_t len)
+ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_upstream_log_t *log,
+    u_char *buf, size_t len)
 {
     u_char              *name;
     time_t               now;
@@ -982,6 +1000,81 @@ ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     v->valid = 1;
     v->no_cacheable = 0;
     v->not_found = 0;
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_t *u;
+
+    u = r->upstream;
+
+    if (u && u->method.len > 0) {
+        v->len = u->method.len;
+        v->data = u->method.data;
+        v->valid = 1;
+        v->no_cacheable = 0;
+        v->not_found = 0;
+    } else {
+        v->not_found = 1;
+    }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_scheme_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_t *u;
+
+    u = r->upstream;
+
+    if (u && u->schema.len > 0) {
+        v->len = u->schema.len;
+        v->data = u->schema.data;
+        v->valid = 1;
+        v->no_cacheable = 0;
+        v->not_found = 0;
+    } else {
+        v->not_found = 1;
+    }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_uri_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_t     *u;
+    ngx_str_t                uri;
+
+    u = r->upstream;
+
+    if (u && u->uri.len > 0) {
+        uri.len = u->uri.len;
+        uri.data = ngx_pnalloc(r->pool, uri.len);
+        if (uri.data == NULL) {
+            return NGX_ERROR;
+        }
+
+        ngx_memcpy(uri.data, u->uri.data, uri.len);
+
+        v->len = uri.len;
+        v->data = uri.data;
+        v->valid = 1;
+        v->no_cacheable = 0;
+        v->not_found = 0;
+    } else {
+        v->not_found = 1;
+    }
 
     return NGX_OK;
 }
