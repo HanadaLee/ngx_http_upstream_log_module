@@ -128,8 +128,6 @@ static void ngx_http_upstream_log_flush_handler(ngx_event_t *ev);
 
 
 static ngx_int_t ngx_http_upstream_log_add_variables(ngx_conf_t *cf);
-static ngx_int_t ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
-    ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_scheme_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_uri_variable( ngx_http_request_t *r,
@@ -250,10 +248,6 @@ ngx_module_t ngx_http_upstream_log_module = {
 
 
 static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
-
-    { ngx_string("upstream_method"), NULL,
-      ngx_http_upstream_log_method_variable, 0,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_scheme"), NULL,
       ngx_http_upstream_log_scheme_variable, 0,
@@ -1016,38 +1010,24 @@ ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
 
 
 static ngx_int_t
-ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
-    ngx_http_variable_value_t *v, uintptr_t data)
-{
-    ngx_http_upstream_t *u;
-
-    u = r->upstream;
-
-    if (u && u->method.len > 0) {
-        v->len = u->method.len;
-        v->data = u->method.data;
-        v->valid = 1;
-        v->no_cacheable = 0;
-        v->not_found = 0;
-    } else {
-        v->not_found = 1;
-    }
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
 ngx_http_upstream_log_scheme_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
     ngx_http_upstream_t *u;
+    ngx_str_t scheme;
 
     u = r->upstream;
 
     if (u && u->schema.len > 0) {
-        v->len = u->schema.len;
-        v->data = u->schema.data;
+        scheme.data = u->schema.data;
+        scheme.len = u->schema.len;
+
+        if (scheme.len > 3 && ngx_strncmp(&scheme.data[scheme.len - 3], "://", 3) == 0) {
+            scheme.len -= 3;
+        }
+
+        v->len = scheme.len;
+        v->data = scheme.data;
         v->valid = 1;
         v->no_cacheable = 0;
         v->not_found = 0;
