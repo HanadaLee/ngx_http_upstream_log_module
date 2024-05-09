@@ -88,14 +88,18 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_LOG_ESCAPE_NONE           2
 
 #define NGX_HTTP_UPSTREAM_LOG_START_TS              10
+#if (NGX_HTTP_SSL)
 #define NGX_HTTP_UPSTREAM_LOG_SSL_START_TS          11
+#endif
 #define NGX_HTTP_UPSTREAM_LOG_SEND_START_TS         12
 #define NGX_HTTP_UPSTREAM_LOG_SEND_END_TS           13
 #define NGX_HTTP_UPSTREAM_LOG_HEADER_TS             14
 #define NGX_HTTP_UPSTREAM_LOG_END_TS                15
 
 #define NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME          20
+#if (NGX_HTTP_SSL)
 #define NGX_HTTP_UPSTREAM_LOG_SSL_TIME              21
+#endif
 #define NGX_HTTP_UPSTREAM_LOG_SEND_TIME             22
 #define NGX_HTTP_UPSTREAM_LOG_READ_TIME             23
 #define NGX_HTTP_UPSTREAM_LOG_HEADER_TIME           24
@@ -247,15 +251,15 @@ ngx_module_t ngx_http_upstream_log_module = {
 
 static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
 
-    { ngx_string("upstream_method"), NULL, NULL,
+    { ngx_string("upstream_method"), NULL,
       ngx_http_upstream_log_method_variable, 0,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_scheme"), NULL, NULL,
+    { ngx_string("upstream_scheme"), NULL,
       ngx_http_upstream_log_scheme_variable, 0,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_uri"), NULL, NULL,
+    { ngx_string("upstream_uri"), NULL,
       ngx_http_upstream_log_uri_variable, 0,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
@@ -277,6 +281,8 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       NGX_HTTP_UPSTREAM_LOG_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
+#if (NGX_HTTP_SSL)
+
     { ngx_string("upstream_ssl_start_ts"), NULL,
       ngx_http_upstream_log_multi_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_START_TS,
@@ -286,6 +292,8 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       ngx_http_upstream_log_single_ts_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_START_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+#endif
 
     { ngx_string("upstream_send_start_ts"), NULL,
       ngx_http_upstream_log_multi_ts_variable,
@@ -339,6 +347,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
+#if (NGX_HTTP_SSL)
     { ngx_string("upstream_ssl_time"), NULL,
       ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_TIME,
@@ -348,6 +357,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       ngx_http_upstream_log_single_time_variable,
       NGX_HTTP_UPSTREAM_LOG_SSL_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
+#endif
 
     { ngx_string("upstream_send_time"), NULL,
       ngx_http_upstream_log_multi_time_variable,
@@ -1159,9 +1169,11 @@ ngx_http_upstream_log_multi_ts_variable(ngx_http_request_t *r,
             ms = state[i].start_msec;
             break;
 
+#if (NGX_HTTP_SSL)
         case NGX_HTTP_UPSTREAM_LOG_SSL_START_TS:
             ms = state[i].ssl_start_msec;
             break;
+#endif
 
         case NGX_HTTP_UPSTREAM_LOG_SEND_START_TS:
             ms = state[i].send_start_msec;
@@ -1230,7 +1242,6 @@ ngx_http_upstream_log_single_ts_variable(ngx_http_request_t *r,
 {
     u_char                     *p;
     ngx_time_t                 *tp;
-    ngx_uint_t                  len;
     ngx_msec_t                  ms;
     ngx_http_upstream_state_t  *state;
 
@@ -1248,22 +1259,17 @@ ngx_http_upstream_log_single_ts_variable(ngx_http_request_t *r,
 
     tp = ngx_timeofday();
 
-    len = NGX_TIME_T_LEN + 4;
-    p = ngx_pnalloc(r->pool, len);
-    if (p == NULL) {
-        return NGX_ERROR;
-    }
-    v->data = p;
-
     switch (data) {
 
     case NGX_HTTP_UPSTREAM_LOG_START_TS:
         ms = state->start_msec;
         break;
 
+#if (NGX_HTTP_SSL)
     case NGX_HTTP_UPSTREAM_LOG_SSL_START_TS:
         ms = state->ssl_start_msec;
         break;
+#endif
 
     case NGX_HTTP_UPSTREAM_LOG_SEND_START_TS:
         ms = state->send_start_msec;
@@ -1292,8 +1298,16 @@ ngx_http_upstream_log_single_ts_variable(ngx_http_request_t *r,
 
     if (ms != (ngx_msec_t) -1) {
         ms = (ngx_msec_t)(tp->sec * 1000 + tp->msec + ms - ngx_current_msec);
+
+        p = ngx_pnalloc(r->pool, NGX_TIME_T_LEN + 4);
+        if (p == NULL) {
+            return NGX_ERROR;
+        }
+
+        v->data = p;
         p = ngx_sprintf(p, "%T.%03M", (time_t) ms / 1000, ms % 1000);
         v->len = p - v->data;
+
     } else {
         v->not_found = 1;
     }
@@ -1343,6 +1357,7 @@ ngx_http_upstream_log_multi_time_variable(ngx_http_request_t *r,
 
         /* NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME */
 
+#if (NGX_HTTP_SSL)
         case NGX_HTTP_UPSTREAM_LOG_SSL_TIME:
             if (state[i].ssl_start_msec == (ngx_msec_t) -1) {
                 ms = (ngx_msec_t) -1;
@@ -1352,6 +1367,7 @@ ngx_http_upstream_log_multi_time_variable(ngx_http_request_t *r,
                 ms = (ngx_msec_t) (state[i].send_start_msec - state[i].ssl_start_msec);
             }
             break;
+#endif
 
         case NGX_HTTP_UPSTREAM_LOG_SEND_TIME:
             if (state[i].send_start_msec == (ngx_msec_t) -1) {
@@ -1437,39 +1453,45 @@ ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
 
     switch (data) {
 
+#if (NGX_HTTP_SSL)
     case NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME:
-        if (state.ssl_start_msec == (ngx_msec_t) -1) {
+        if (state->ssl_start_msec == (ngx_msec_t) -1) {
             ms = state->connect_time;
         } else {
-            ms = (ngx_msec_t) (state.ssl_start_msec - state.start_msec);
+            ms = (ngx_msec_t) (state->ssl_start_msec - state->start_msec);
         }
         break;
 
     case NGX_HTTP_UPSTREAM_LOG_SSL_TIME:
-        if (state.ssl_start_msec == (ngx_msec_t) -1) {
+        if (state->ssl_start_msec == (ngx_msec_t) -1) {
             ms = (ngx_msec_t) -1;
-        } else if (state.send_start_msec == (ngx_msec_t) -1) {
-            ms = (ngx_msec_t) (state.start_msec + state.response_time - state.ssl_start_msec);
+        } else if (state->send_start_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) (state->start_msec + state->response_time - state->ssl_start_msec);
         } else {
-            ms = (ngx_msec_t) (state.send_start_msec - state.ssl_start_msec);
+            ms = (ngx_msec_t) (state->send_start_msec - state->ssl_start_msec);
         }
         break;
+#else
+    case NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME:
+        ms = (ngx_msec_t) (state->ssl_start_msec - state->start_msec);
+        break;
+#endif
 
     case NGX_HTTP_UPSTREAM_LOG_SEND_TIME:
-        if (state.send_start_msec == (ngx_msec_t) -1) {
+        if (state->send_start_msec == (ngx_msec_t) -1) {
             ms = (ngx_msec_t) -1;
-        } else if (state.send_end_msec == (ngx_msec_t) -1) {
-            ms = (ngx_msec_t) (state.start_msec + state.response_time - state.send_start_msec);
+        } else if (state->send_end_msec == (ngx_msec_t) -1) {
+            ms = (ngx_msec_t) (state->start_msec + state->response_time - state->send_start_msec);
         } else {
-            ms = (ngx_msec_t) (state.send_end_msec - state.send_start_msec);
+            ms = (ngx_msec_t) (state->send_end_msec - state->send_start_msec);
         }
         break;
 
     case NGX_HTTP_UPSTREAM_LOG_READ_TIME:
-        if (state.send_end_msec == (ngx_msec_t) -1) {
+        if (state->send_end_msec == (ngx_msec_t) -1) {
             ms = (ngx_msec_t) -1;
         } else {
-            ms = (ngx_msec_t) (state.start_msec + state.response_time - state.send_end_msec);
+            ms = (ngx_msec_t) (state->start_msec + state->response_time - state->send_end_msec);
         }
         break;
 
@@ -1488,13 +1510,16 @@ ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
 
     if (ms != -1) {
         ms = ngx_max(ms, 0);
+
         p = ngx_pnalloc(r->pool, NGX_TIME_T_LEN + 4);
         if (p == NULL) {
             return NGX_ERROR;
         }
+
         v->data = p;
         p = ngx_sprintf(p, "%T.%03M", (time_t) ms / 1000, ms % 1000);
         v->len = p - v->data;
+
     } else {
         v->not_found = 1;
     }
