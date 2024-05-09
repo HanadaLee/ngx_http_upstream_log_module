@@ -1473,7 +1473,7 @@ ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
         break;
 #else
     case NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME:
-        ms = (ngx_msec_t) (state->ssl_start_msec - state->start_msec);
+        ms = state->connect_time;
         break;
 #endif
 
