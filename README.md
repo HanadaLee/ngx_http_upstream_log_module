@@ -6,6 +6,7 @@ The ngx_http_upstream_log_module module writes upstream request logs in the spec
 Most of the work of this module originates from ngx_http_log_module.
 
 # Description
+
 Unlike the access log module, it will be logged at the end of each upstream request. If several servers were contacted during request processing, an upstream log is recorded at the end of each contact. If an internal redirect from one server group to another happens, initiated by “X-Accel-Redirect” or error_page, an upstream log will also be recorded at the end of each contact.
 
 This module also provides a series of variables for upstream logging. Most of them start with $upstream_log_, which is used to distinguish them from the variables in ngx_http_upstream_module. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.
@@ -13,6 +14,7 @@ This module also provides a series of variables for upstream logging. Most of th
 The usage of this module is very similar to ngx_http_log_module. For example, use the upstream_log_format directive to specify the format of the upstream log. Use the upstream_log directive to sets the path, format, and configuration for a buffered log write.
 
 # Status
+
 This Nginx module is currently considered experimental. Issues and PRs are welcome if you encounter any problems.
 
 # Synopsis
@@ -49,8 +51,19 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
 
 # Installation
 
-> Todo
+In order to use this module, you must first patch nginx. Then configure your nginx branch with --add-module=/path/to/ngx_http_upstream_log_module
 
+```
+$ wget 'https://nginx.org/download/nginx-1.26.0.tar.gz'
+$ tar -xzvf nginx-1.26.0.tar.gz
+$ cd nginx-1.26.0
+$ patch -p1 < /path/to/ngx_http_upstream_log_module/ngx_http_upstream_log_1.25.3+.patch
+
+$ ./configure --add-module=/path/to/ngx_http_upstream_log_module
+
+$ make
+$ make install
+```
 
 # Directive
 
@@ -230,4 +243,5 @@ keeps time spent on establishing a connection with the upstream server; the time
 Hanada im@hanada.info
 
 # License
+
 This Nginx module is licensed under BSD 2-Clause License.
