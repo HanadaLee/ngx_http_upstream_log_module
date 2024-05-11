@@ -39,7 +39,7 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
             listen 80;
 
             access_log logs/access.log main;
-	        upstream_log logs/upstream.log main;
+            upstream_log logs/upstream.log main;
 
             location / {
                 proxy_pass http://cluster;
@@ -161,6 +161,9 @@ upstream_open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
 
 
 # Variable
+
+### \$upstream_method
+upstream method, usually “GET” or “POST”.
 
 ### \$upstream_scheme
 upstream scheme, "http" or "https".
