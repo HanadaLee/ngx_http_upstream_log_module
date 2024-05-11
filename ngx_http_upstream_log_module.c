@@ -128,6 +128,8 @@ static void ngx_http_upstream_log_flush_handler(ngx_event_t *ev);
 
 
 static ngx_int_t ngx_http_upstream_log_add_variables(ngx_conf_t *cf);
+static ngx_int_t ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_scheme_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_uri_variable( ngx_http_request_t *r,
@@ -248,6 +250,10 @@ ngx_module_t ngx_http_upstream_log_module = {
 
 
 static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
+
+    { ngx_string("upstream_method"), NULL,
+      ngx_http_upstream_log_method_variable, 0,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_scheme"), NULL,
       ngx_http_upstream_log_scheme_variable, 0,
@@ -420,9 +426,9 @@ static ngx_str_t  ngx_http_upstream_log = ngx_string(NGX_HTTP_LOG_PATH);
 
 
 static ngx_str_t  ngx_http_upstream_combined_fmt =
-    ngx_string("[$time_local] $remote_addr $server_addr"
-               "\"$request\" $status $body_bytes_sent "
-               "\"$http_referer\" \"$http_user_agent\"");
+    ngx_string("$remote_addr $upstream_log_addr [$time_local] \"$upstream_method $upstream_uri\" "
+               "$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received "
+               "$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time");
 
 
 ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
@@ -1004,6 +1010,28 @@ ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     v->valid = 1;
     v->no_cacheable = 0;
     v->not_found = 0;
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_t *u;
+
+    u = r->upstream;
+
+    if (u && u->method_name.len > 0) {
+        v->len = u->method_name.len;
+        v->data = u->method_name.data;
+        v->valid = 1;
+        v->no_cacheable = 0;
+        v->not_found = 0;
+    } else {
+        v->not_found = 1;
+    }
 
     return NGX_OK;
 }

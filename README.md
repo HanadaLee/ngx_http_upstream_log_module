@@ -26,8 +26,8 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
                         '$status $body_bytes_sent "$http_referer" '
                         '"$http_user_agent" "$http_x_forwarded_for"';
 
-        upstream_log_format main '$remote_addr $upstream_log_addr [$time_local] "$request" '
-                                 '$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received'
+        upstream_log_format main '$remote_addr $upstream_log_addr [$time_local] "$upstream_method $upstream_uri" '
+                                 '$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received '
                                  '$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time';
 
         upstream cluster {
@@ -130,9 +130,9 @@ For json escaping, all characters not allowed in JSON strings will be escaped: c
 
 The configuration always includes the predefined “combined” format:
 ```
-upstream_log_format combined '$remote_addr - $remote_user [$time_local] '
-                    '"$request" $status $body_bytes_sent '
-                    '"$http_referer" "$http_user_agent"';
+upstream_log_format combined '$remote_addr $upstream_log_addr [$time_local] "$upstream_method $upstream_uri" '
+                             '$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received '
+                             '$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time';
 ```
 
 ### upstream_open_log_file_cache

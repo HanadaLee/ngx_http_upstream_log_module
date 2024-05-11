@@ -1,3 +1,33 @@
+diff --git a/src/http/modules/ngx_http_grpc_module.c b/src/http/modules/ngx_http_grpc_module.c
+index dfe49c5..ee39d91 100644
+--- a/src/http/modules/ngx_http_grpc_module.c
++++ b/src/http/modules/ngx_http_grpc_module.c
+@@ -916,6 +916,10 @@ ngx_http_grpc_create_request(ngx_http_request_t *r)
+                        "grpc header: \":method: %V\"", &r->method_name);
+     }
+ 
++#if (NGX_HTTP_UPSTREAM_LOG)
++    u->method_name = r->method_name;
++#endif
++
+ #if (NGX_HTTP_SSL)
+     if (u->ssl) {
+         *b->last++ = ngx_http_v2_indexed(NGX_HTTP_V2_SCHEME_HTTPS_INDEX);
+diff --git a/src/http/modules/ngx_http_proxy_module.c b/src/http/modules/ngx_http_proxy_module.c
+index 4eb6931..2ae8c5f 100644
+--- a/src/http/modules/ngx_http_proxy_module.c
++++ b/src/http/modules/ngx_http_proxy_module.c
+@@ -1275,6 +1275,10 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
+         method = r->method_name;
+     }
+ 
++#if (NGX_HTTP_UPSTREAM_LOG)
++    u->method_name = method;
++#endif
++
+     ctx = ngx_http_get_module_ctx(r, ngx_http_proxy_module);
+ 
+     if (method.len == 4
 diff --git a/src/http/ngx_http_upstream.c b/src/http/ngx_http_upstream.c
 index 2be233c..e52a78f 100644
 --- a/src/http/ngx_http_upstream.c
@@ -93,7 +123,7 @@ index 2be233c..e52a78f 100644
  
      u->finalize_request(r, rc);
 diff --git a/src/http/ngx_http_upstream.h b/src/http/ngx_http_upstream.h
-index 15a35d9..f70475a 100644
+index 15a35d9..01ce3dc 100644
 --- a/src/http/ngx_http_upstream.h
 +++ b/src/http/ngx_http_upstream.h
 @@ -62,6 +62,18 @@ typedef struct {
@@ -115,3 +145,14 @@ index 15a35d9..f70475a 100644
      off_t                            response_length;
      off_t                            bytes_received;
      off_t                            bytes_sent;
+@@ -381,6 +393,10 @@ struct ngx_http_upstream_s {
+     ngx_str_t                        schema;
+     ngx_str_t                        uri;
+ 
++#if (NGX_HTTP_UPSTREAM_LOG)
++    ngx_str_t                        method_name;
++#endif
++
+ #if (NGX_HTTP_SSL || NGX_COMPAT)
+     ngx_str_t                        ssl_name;
+ #endif
