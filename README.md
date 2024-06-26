@@ -9,7 +9,7 @@ Most of the work of this module originates from ngx_http_log_module.
 
 Unlike the access log module, it will be logged at the end of each upstream request. If several servers were contacted during request processing, an upstream log is recorded at the end of each contact. If an internal redirect from one server group to another happens, initiated by “X-Accel-Redirect” or error_page, an upstream log will also be recorded at the end of each contact.
 
-This module also provides a series of variables for upstream logging. Most of them start with $upstream_log_, which is used to distinguish them from the variables in ngx_http_upstream_module. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.
+This module also provides a series of variables for upstream logging. Many of these variables start with $upstream_last_, which is used to distinguish them from the variables in ngx_http_upstream. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.
 
 The usage of this module is very similar to ngx_http_log_module. For example, use the upstream_log_format directive to specify the format of the upstream log. Use the upstream_log directive to sets the path, format, and configuration for a buffered log write.
 
@@ -171,73 +171,73 @@ upstream scheme, "http" or "https".
 ### \$upstream_uri
 full upstream request uri.
 
-### \$upstream_log_addr
+### \$upstream_last_addr
 keeps the IP address and port, or the path to the UNIX-domain socket of the latest upstream server.
 
-### \$upstream_log_status
+### \$upstream_last_status
 keeps status code of the response obtained from the latest upstream server.
 
 ### \$upstream_start_ts
 keeps timestamp of upstream starts; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_start_ts
+### \$upstream_last_start_ts
 keeps timestamp of latest upstream starts; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_ssl_start_ts
 keeps timestamp of upstream ssl handshake starts; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_ssl_start_ts
+### \$upstream_last_ssl_start_ts
 keeps timestamp of latest upstream ssl handshake starts; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_ssl_time
 keeps time spent on upstream ssl handshake; the time is kept in seconds with millisecond resolution. Note that this timing starts only after receiving the upstream request header. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_ssl_time
+### \$upstream_last_ssl_time
 keeps time spent on latest upstream ssl handshake; the time is kept in seconds with millisecond resolution. Note that this timing starts only after receiving the upstream request header.
 
 ### \$upstream_send_start_ts
 keeps timestamp of upstream request send starts; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_send_start_ts
+### \$upstream_last_send_start_ts
 keeps timestamp of latest upstream request send starts; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_send_end_ts
 keeps timestamp of upstream request send ends; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_send_end_ts
+### \$upstream_last_send_end_ts
 keeps timestamp of latest upstream request send ends; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_send_time
 keeps time spent on sending request to the upstream server; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_send_time
+### \$upstream_last_send_time
 keeps time spent on sending request to the latest upstream server; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_header_ts
 keeps timestamp of upstream response header sent; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_header_ts
+### \$upstream_last_header_ts
 keeps timestamp of latest upstream response header sent; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_end_ts
 keeps timestamp of upstream response sent or abnormal interruption; the time is kept in seconds with millisecond resolution. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_end_ts
+### \$upstream_last_end_ts
 keeps timestamp of latest upstream response sent or abnormal interruption; the time is kept in seconds with millisecond resolution.
 
 ### \$upstream_read_time
 keeps time spent on reading response from the upstream server; the time is kept in seconds with millisecond resolution. Note that this timing starts only after receiving the upstream request header. Times of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
 
-### \$upstream_log_read_time
+### \$upstream_last_read_time
 keeps time spent on reading response from the latest upstream server; the time is kept in seconds with millisecond resolution. Note that this timing starts only after receiving the upstream request header.
 
-### \$upstream_log_header_time
+### \$upstream_last_header_time
 keeps time spent on receiving the response header from the latest upstream server; the time is kept in seconds with millisecond resolution.
 
-### \$upstream_log_response_time
+### \$upstream_last_response_time
 keeps time spent on receiving the response from the latest upstream server; the time is kept in seconds with millisecond resolution.
 
-### \$upstream_log_connect_time
+### \$upstream_last_connect_time
 keeps time spent on establishing a connection with the upstream server; the time is kept in seconds with millisecond resolution. In case of SSL, does not include time spent on handshake (please note that it is different from $upstream_connect_time).
 
 
