@@ -26,9 +26,9 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
                         '$status $body_bytes_sent "$http_referer" '
                         '"$http_user_agent" "$http_x_forwarded_for"';
 
-        upstream_log_format main '$remote_addr $upstream_log_addr [$time_local] "$upstream_method $upstream_uri" '
-                                 '$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received '
-                                 '$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time';
+        upstream_log_format main '$remote_addr $upstream_last_addr [$time_local] "$upstream_method $upstream_uri" '
+                                 '$upstream_last_status $upstream_last_response_length $upstream_last_bytes_sent $upstream_last_bytes_received '
+                                 '$upstream_last_connect_time $upstream_last_header_time $upstream_last_response_time';
 
         upstream cluster {
             server 192.168.0.1:80;
