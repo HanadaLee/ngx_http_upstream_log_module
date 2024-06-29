@@ -1079,7 +1079,7 @@ ngx_http_upstream_log_local_addr_variable(ngx_http_request_t *r,
         return NGX_OK;
     }
 
-    *p = ngx_pnalloc(r->pool, NGX_SOCKADDR_STRLEN);
+    p = ngx_pnalloc(r->pool, NGX_SOCKADDR_STRLEN);
     if (p == NULL) {
         return NGX_ERROR;
     }
