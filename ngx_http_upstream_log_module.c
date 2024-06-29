@@ -134,6 +134,8 @@ static ngx_int_t ngx_http_upstream_log_scheme_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_uri_variable( ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
+static ngx_int_t ngx_http_upstream_log_local_addr_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_status_variable(ngx_http_request_t *r,
@@ -261,6 +263,10 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
 
     { ngx_string("upstream_uri"), NULL,
       ngx_http_upstream_log_uri_variable, 0,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_local_addr"), NULL,
+      ngx_http_upstream_log_local_addr_variable, 0,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_last_addr"), NULL,
@@ -971,54 +977,6 @@ ngx_http_upstream_log_add_variables(ngx_conf_t *cf)
 
 
 static ngx_int_t
-ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
-    ngx_http_variable_value_t *v, uintptr_t data)
-{
-    ngx_http_upstream_state_t  *state;
-
-    if (r->upstream && r->upstream->state && r->upstream->state->peer) {
-        v->len = r->upstream->state->peer->len;
-        v->data = ngx_pnalloc(r->pool, v->len);
-        if (v->data == NULL) {
-            return NGX_ERROR;
-        }
-        ngx_memcpy(v->data, r->upstream->state->peer->data, v->len);
-        v->valid = 1;
-        v->no_cacheable = 0;
-        v->not_found = 0;
-        return NGX_OK;
-    }
-
-    if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
-        v->not_found = 1;
-        return NGX_OK;
-    }
-
-    state = r->upstream_states->elts;
-    state = &state[r->upstream_states->nelts - 1];
-    
-    if (state->peer) {
-        v->len = state->peer->len;
-        v->data = ngx_pnalloc(r->pool, v->len);
-        if (v->data == NULL) {
-            return NGX_ERROR;
-        }
-        ngx_memcpy(v->data, state->peer->data, v->len);
-
-    } else {
-        v->not_found = 1;
-        return NGX_OK;
-    }
-
-    v->valid = 1;
-    v->no_cacheable = 0;
-    v->not_found = 0;
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
 ngx_http_upstream_log_method_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
@@ -1096,6 +1054,89 @@ ngx_http_upstream_log_uri_variable(ngx_http_request_t *r,
     } else {
         v->not_found = 1;
     }
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_local_addr_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_t        *u;
+    ngx_connection_t           *peer_connection;
+    u_char                     *p
+
+    u = r->upstream;
+    if (u == NULL) {
+        v->not_found = 1;
+        return NGX_OK;
+    }
+
+    peer_connection = u->peer.connection
+    if (peer_connection == NULL || peer_connection->local_sockaddr == NULL) {
+        v->not_found = 1;
+        return NGX_OK;
+    }
+
+    *p = ngx_pnalloc(r->pool, NGX_SOCKADDR_STRLEN);
+    if (p == NULL) {
+        return NGX_ERROR;
+    }
+
+    v->len = ngx_sock_ntop(peer_connection->local_sockaddr, peer_connection->local_socklen, p, NGX_SOCKADDR_STRLEN, 1);
+    v->data = p;
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
+}
+
+
+static ngx_int_t
+ngx_http_upstream_log_addr_variable(ngx_http_request_t *r,
+    ngx_http_variable_value_t *v, uintptr_t data)
+{
+    ngx_http_upstream_state_t  *state;
+
+    if (r->upstream && r->upstream->state && r->upstream->state->peer) {
+        v->len = r->upstream->state->peer->len;
+        v->data = ngx_pnalloc(r->pool, v->len);
+        if (v->data == NULL) {
+            return NGX_ERROR;
+        }
+        ngx_memcpy(v->data, r->upstream->state->peer->data, v->len);
+        v->valid = 1;
+        v->no_cacheable = 0;
+        v->not_found = 0;
+        return NGX_OK;
+    }
+
+    if (r->upstream_states == NULL || r->upstream_states->nelts == 0) {
+        v->not_found = 1;
+        return NGX_OK;
+    }
+
+    state = r->upstream_states->elts;
+    state = &state[r->upstream_states->nelts - 1];
+    
+    if (state->peer) {
+        v->len = state->peer->len;
+        v->data = ngx_pnalloc(r->pool, v->len);
+        if (v->data == NULL) {
+            return NGX_ERROR;
+        }
+        ngx_memcpy(v->data, state->peer->data, v->len);
+
+    } else {
+        v->not_found = 1;
+        return NGX_OK;
+    }
+
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
 
     return NGX_OK;
 }
