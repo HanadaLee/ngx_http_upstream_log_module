@@ -435,9 +435,9 @@ static ngx_str_t  ngx_http_upstream_log = ngx_string(NGX_HTTP_LOG_PATH);
 
 
 static ngx_str_t  ngx_http_upstream_combined_fmt =
-    ngx_string("$remote_addr $upstream_log_addr [$time_local] \"$upstream_method $upstream_uri\" "
-               "$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received "
-               "$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time");
+    ngx_string("$remote_addr $upstream_last_addr [$time_local] \"$upstream_method $upstream_uri\" "
+               "$upstream_last_status $upstream_last_response_length $upstream_last_bytes_sent $upstream_last_bytes_received "
+               "$upstream_last_connect_time $upstream_last_header_time $upstream_last_response_time");
 
 
 ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
