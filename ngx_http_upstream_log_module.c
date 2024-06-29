@@ -1065,7 +1065,7 @@ ngx_http_upstream_log_local_addr_variable(ngx_http_request_t *r,
 {
     ngx_http_upstream_t        *u;
     ngx_connection_t           *peer_connection;
-    u_char                     *p
+    u_char                     *p;
 
     u = r->upstream;
     if (u == NULL) {
