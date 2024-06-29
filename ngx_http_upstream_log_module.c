@@ -1073,7 +1073,7 @@ ngx_http_upstream_log_local_addr_variable(ngx_http_request_t *r,
         return NGX_OK;
     }
 
-    peer_connection = u->peer.connection
+    peer_connection = u->peer.connection;
     if (peer_connection == NULL || peer_connection->local_sockaddr == NULL) {
         v->not_found = 1;
         return NGX_OK;
