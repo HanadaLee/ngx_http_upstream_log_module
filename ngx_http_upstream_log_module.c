@@ -439,7 +439,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
     */
 
     { ngx_string("upstream_last_response_length"), NULL,
-      ngx_http_upstream_log_response_length_variable,
+      ngx_http_upstream_log_single_length_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
@@ -452,7 +452,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
     */
 
     { ngx_string("upstream_last_bytes_received"), NULL,
-      ngx_http_upstream_log_response_length_variable,
+      ngx_http_upstream_log_single_length_variable,
       NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
@@ -465,7 +465,7 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
     */
 
     { ngx_string("upstream_last_bytes_sent"), NULL,
-      ngx_http_upstream_log_response_length_variable,
+      ngx_http_upstream_log_single_length_variable,
       NGX_HTTP_UPSTREAM_LOG_BYTES_SENT,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
@@ -1616,7 +1616,6 @@ ngx_http_upstream_log_multi_length_variable(ngx_http_request_t *r,
     u_char                     *p;
     size_t                      len;
     ngx_uint_t                  i;
-    ngx_msec_int_t              ms;
     ngx_http_upstream_state_t  *state;
 
     v->valid = 1;
