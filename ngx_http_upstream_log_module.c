@@ -106,10 +106,9 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_LOG_HEADER_TIME             25
 #define NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME           26
 
-#define NGX_HTTP_UPSTREAM_LOG_HEADER_LENGTH           30
-#define NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH         31
-#define NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED          32
-#define NGX_HTTP_UPSTREAM_LOG_BYTES_SENT              33
+#define NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH         30
+#define NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED          31
+#define NGX_HTTP_UPSTREAM_LOG_BYTES_SENT              32
 
 
 static void ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_upstream_log_t *log,
@@ -148,8 +147,10 @@ static ngx_int_t ngx_http_upstream_log_multi_time_variable(ngx_http_request_t *r
     ngx_http_variable_value_t *v, uintptr_t data);
 static ngx_int_t ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
+#if 0
 static ngx_int_t ngx_http_upstream_log_multi_length_variable(
     ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
+#endif
 static ngx_int_t ngx_http_upstream_log_single_length_variable(
     ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
 
@@ -339,13 +340,12 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       NGX_HTTP_UPSTREAM_LOG_END_TS,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    /* Already implemented in ngx_http_upstream_module */
-    /*
+#if 0
     { ngx_string("upstream_connect_time"), NULL,
       ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-    */
+#endif
 
     { ngx_string("upstream_last_connect_time"), NULL,
       ngx_http_upstream_log_single_time_variable,
@@ -354,12 +354,12 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
 
     { ngx_string("upstream_transport_connect_time"), NULL,
       ngx_http_upstream_log_multi_time_variable,
-      NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
+      NGX_HTTP_UPSTREAM_LOG_TRANSPORT_CONNECT_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_last_transport_connect_time"), NULL,
       ngx_http_upstream_log_single_time_variable,
-      NGX_HTTP_UPSTREAM_LOG_CONNECT_TIME,
+      NGX_HTTP_UPSTREAM_LOG_TRANSPORT_CONNECT_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
 #if (NGX_HTTP_SSL)
@@ -394,75 +394,60 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
       NGX_HTTP_UPSTREAM_LOG_READ_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    /* Already implemented in ngx_http_upstream_module */
-    /*
+#if 0
     { ngx_string("upstream_header_time"), NULL,
       ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_HEADER_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-    */
+#endif
 
     { ngx_string("upstream_last_header_time"), NULL,
       ngx_http_upstream_log_single_time_variable,
       NGX_HTTP_UPSTREAM_LOG_HEADER_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    /* Already implemented in ngx_http_upstream_module */
-    /*
+#if 0
     { ngx_string("upstream_response_time"), NULL,
       ngx_http_upstream_log_multi_time_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-    */
+#endif
 
     { ngx_string("upstream_last_response_time"), NULL,
       ngx_http_upstream_log_single_time_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_TIME,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    { ngx_string("upstream_header_length"), NULL,
-      ngx_http_upstream_log_multi_length_variable,
-      NGX_HTTP_UPSTREAM_LOG_HEADER_LENGTH,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
-
-    { ngx_string("upstream_last_header_length"), NULL,
-      ngx_http_upstream_log_single_length_variable,
-      NGX_HTTP_UPSTREAM_LOG_HEADER_LENGTH,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
-
-    /* Already implemented in ngx_http_upstream_module */
-    /*
+#if 0
     { ngx_string("upstream_response_length"), NULL,
       ngx_http_upstream_log_multi_length_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-    */
+#endif
 
     { ngx_string("upstream_last_response_length"), NULL,
       ngx_http_upstream_log_single_length_variable,
       NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    /* Already implemented in ngx_http_upstream_module */
-    /*
+#if 0
     { ngx_string("upstream_bytes_received"), NULL,
       ngx_http_upstream_log_multi_length_variable,
       NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-    */
+#endif
 
     { ngx_string("upstream_last_bytes_received"), NULL,
       ngx_http_upstream_log_single_length_variable,
       NGX_HTTP_UPSTREAM_LOG_BYTES_RECEIVED,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
-    /* Already implemented in ngx_http_upstream_module */
-    /*
+#if 0
     { ngx_string("upstream_bytes_sent"), NULL,
       ngx_http_upstream_log_multi_length_variable,
       NGX_HTTP_UPSTREAM_LOG_BYTES_SENT,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
-    */
+#endif
 
     { ngx_string("upstream_last_bytes_sent"), NULL,
       ngx_http_upstream_log_single_length_variable,
@@ -1609,6 +1594,7 @@ ngx_http_upstream_log_single_time_variable(ngx_http_request_t *r,
 }
 
 
+#if 0
 static ngx_int_t
 ngx_http_upstream_log_multi_length_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
@@ -1642,10 +1628,6 @@ ngx_http_upstream_log_multi_length_variable(ngx_http_request_t *r,
     for ( ;; ) {
 
         switch(data) {
-
-            case NGX_HTTP_UPSTREAM_LOG_HEADER_LENGTH:
-                p = ngx_sprintf(p, "%O", state[i].header_length);
-                break;
 
             /* NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH */
 
@@ -1683,7 +1665,7 @@ ngx_http_upstream_log_multi_length_variable(ngx_http_request_t *r,
 
     return NGX_OK;
 }
-
+#endif
 
 static ngx_int_t
 ngx_http_upstream_log_single_length_variable(ngx_http_request_t *r,
@@ -1712,10 +1694,6 @@ ngx_http_upstream_log_single_length_variable(ngx_http_request_t *r,
     v->data = p;
 
     switch(data) {
-    
-    case NGX_HTTP_UPSTREAM_LOG_HEADER_LENGTH:
-        p = ngx_sprintf(p, "%O", state->header_length);
-        break;
 
     case NGX_HTTP_UPSTREAM_LOG_RESPONSE_LENGTH:
         p = ngx_sprintf(p, "%O", state->response_length);

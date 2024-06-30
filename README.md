@@ -246,12 +246,6 @@ keeps time spent on receiving the response header from the latest upstream serve
 ### \$upstream_last_response_time
 keeps time spent on receiving the response from the latest upstream server; the time is kept in seconds with millisecond resolution.
 
-### \$upstream_header_length
-keeps the length of the response header obtained from the upstream server; the length is kept in bytes. Lengths of several responses are separated by commas and colons like addresses in the $upstream_addr variable.
-
-### \$upstream_last_header_length
-keeps the length of the response header obtained from the upstream server; the length is kept in bytes.
-
 ### \$upstream_last_response_length
 keeps the length of the response obtained from the upstream server; the length is kept in bytes.
 
