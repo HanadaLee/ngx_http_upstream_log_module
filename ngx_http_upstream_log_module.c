@@ -428,9 +428,6 @@ static ngx_http_variable_t  ngx_http_upstream_log_vars[] = {
 };
 
 
-static ngx_str_t  ngx_http_upstream_log = ngx_string(NGX_HTTP_LOG_PATH);
-
-
 ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
     u_char                            *line, *p;
     size_t                             len, size;
