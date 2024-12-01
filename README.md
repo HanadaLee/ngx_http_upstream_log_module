@@ -11,7 +11,7 @@ Unlike the access log module, it will be logged at the end of each upstream requ
 
 This module also provides a series of variables for upstream logging. Many of these variables start with $upstream_last_, which is used to distinguish them from the variables in ngx_http_upstream. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.
 
-The usage of this module is very similar to ngx_http_log_module. For example, use the upstream_log_format directive to specify the format of the upstream log. Use the upstream_log directive to sets the path, format, and configuration for a buffered log write.
+The usage of this module is very similar to ngx_http_log_module. just use the upstream_log directive to sets the path, format, and configuration for a buffered log write.
 
 # Status
 
@@ -22,11 +22,11 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
 ```
     http {
 
-        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+        log_format access '$remote_addr - $remote_user [$time_local] "$request" '
                         '$status $body_bytes_sent "$http_referer" '
                         '"$http_user_agent" "$http_x_forwarded_for"';
 
-        upstream_log_format main '$remote_addr $upstream_last_addr [$time_local] "$upstream_method $upstream_uri" '
+        log_format upstream '$remote_addr $upstream_last_addr [$time_local] "$upstream_method $upstream_uri" '
                                  '$upstream_last_status $upstream_last_response_length $upstream_last_bytes_sent $upstream_last_bytes_received '
                                  '$upstream_last_connect_time $upstream_last_header_time $upstream_last_response_time';
 
@@ -38,8 +38,8 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
         server {
             listen 80;
 
-            access_log logs/access.log main;
-            upstream_log logs/upstream.log main;
+            access_log logs/access.log access;
+            upstream_log logs/upstream.log upstream;
 
             location / {
                 proxy_pass http://cluster;
@@ -51,7 +51,7 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
 
 # Installation
 
-In order to use this module, you must first patch nginx. Then configure your nginx branch with --add-module=/path/to/ngx_http_upstream_log_module
+In order to use this module, you must patch nginx firstly. Then configure your nginx branch with --add-module=/path/to/ngx_http_upstream_log_module
 
 ```
 $ wget 'https://nginx.org/download/nginx-1.26.0.tar.gz'
@@ -69,10 +69,10 @@ $ make install
 
 ### upstream_log
 * Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]]; upstream_log off;
-* Default:	upstream_log logs/upstream.log combined;
+* Default:	-;
 * Context:	http, server, location, if in location, limit_except
 
-Sets the path, format, and configuration for a buffered log write. Several logs can be specified on the same configuration level. Logging to syslog can be configured by specifying the “syslog:” prefix in the first parameter. The special value off cancels all upstream_log directives on the current level. If the format is not specified then the predefined “combined” format is used.
+Sets the path, format, and configuration for a buffered log write. Several logs can be specified on the same configuration level. Logging to syslog can be configured by specifying the “syslog:” prefix in the first parameter. The special value off cancels all upstream_log directives on the current level. Unlike the access_log directive, this directive does not accept the predefined "combined" format. You must first define the log format using the log_format directive and then reference it using this directive.
 
 If either the buffer or gzip parameter is used, writes to log will be buffered.
 
@@ -87,7 +87,7 @@ If the gzip parameter is used, then the buffered data will be compressed before 
 
 Example:
 ```
-upstream_log /path/to/log.gz combined gzip flush=5m;
+upstream_log /path/to/log.gz upstream gzip flush=5m;
 ```
 > For gzip compression to work, nginx must be built with the zlib library.
 The file path can contain variables, but such logs have some constraints:
@@ -109,54 +109,7 @@ map $upstream_log_status $upstream_loggable {
     default 1;
 }
 
-upstream_log /path/to/upstream.log combined if=$upstream_loggable;
-```
-
-### upstream_log_format
-
-* Syntax:	upstream_log_format name [escape=default|json|none] string ...;
-* Default:	upstream_log_format combined "...";
-* Context:	http
-
-Specifies log format.
-
-Format names can duplicate those defined by log_format, but this is generally not recommended.
-
-The escape parameter allows setting json or default characters escaping in variables, by default, default escaping is used. The none value disables escaping.
-
-For default escaping, characters “"”, “\”, and other characters with values less than 32 or above 126 are escaped as “\xXX”. If the variable value is not found, a hyphen (“-”) will be logged.
-
-For json escaping, all characters not allowed in JSON strings will be escaped: characters “"” and “\” are escaped as “\"” and “\\\”, characters with values less than 32 are escaped as “\n”, “\r”, “\t”, “\b”, “\f”, or “\u00XX”.
-
-The configuration always includes the predefined “combined” format:
-```
-upstream_log_format combined '$remote_addr $upstream_log_addr [$time_local] "$upstream_method $upstream_uri" '
-                             '$upstream_log_status $upstream_log_response_length $upstream_log_bytes_sent $upstream_log_bytes_received '
-                             '$upstream_log_connect_time $upstream_log_header_time $upstream_log_response_time';
-```
-
-### upstream_open_log_file_cache
-* Syntax:	upstream_open_log_file_cache max=N [inactive=time] [min_uses=N] [valid=time]; upstream_open_log_file_cache off;
-* Default:	upstream_open_log_file_cache off;
-* Context:	http, server, location
-
-
-Defines a cache that stores the file descriptors of frequently used logs whose names contain variables. The directive has the following parameters:
-
-* max
-sets the maximum number of descriptors in a cache; if the cache becomes full the least recently used (LRU) descriptors are closed
-* inactive
-sets the time after which the cached descriptor is closed if there were no access during this time; by default, 10 seconds
-* min_uses
-sets the minimum number of file uses during the time defined by the inactive parameter to let the descriptor stay open in a cache; by default, 1
-* valid
-sets the time after which it should be checked that the file still exists with the same name; by default, 60 seconds
-* off
-disables caching
-
-Usage example:
-```
-upstream_open_log_file_cache max=1000 inactive=20s valid=1m min_uses=2;
+upstream_log /path/to/upstream.log upstream if=$upstream_loggable;
 ```
 
 

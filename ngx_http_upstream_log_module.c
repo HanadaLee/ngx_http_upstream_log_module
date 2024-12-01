@@ -41,10 +41,81 @@
 #define NGX_HTTP_UPSTREAM_LOG_BYTES_SENT              32
 
 
-typedef struct {
-    ngx_array_t                         *logs;       /* array of ngx_http_log_t */
+ /*
+ * Types defined in this file was completely copy from ngx_http_log_module, 
+ * if them changes in the future, please update codes here.
+ */
 
-    ngx_uint_t                           off;        /* unsigned  off:1 */
+typedef struct ngx_http_log_op_s  ngx_http_log_op_t;
+
+typedef u_char *(*ngx_http_log_op_run_pt) (ngx_http_request_t *r, u_char *buf,
+    ngx_http_log_op_t *op);
+
+typedef size_t (*ngx_http_log_op_getlen_pt) (ngx_http_request_t *r,
+    uintptr_t data);
+
+
+struct ngx_http_log_op_s {
+    size_t                      len;
+    ngx_http_log_op_getlen_pt   getlen;
+    ngx_http_log_op_run_pt      run;
+    uintptr_t                   data;
+};
+
+
+typedef struct {
+    ngx_str_t                   name;
+    ngx_array_t                *flushes;
+    ngx_array_t                *ops;        /* array of ngx_http_log_op_t */
+} ngx_http_log_fmt_t;
+
+
+typedef struct {
+    u_char                     *start;
+    u_char                     *pos;
+    u_char                     *last;
+
+    ngx_event_t                *event;
+    ngx_msec_t                  flush;
+    ngx_int_t                   gzip;
+} ngx_http_log_buf_t;
+
+
+typedef struct {
+    ngx_array_t                *lengths;
+    ngx_array_t                *values;
+} ngx_http_log_script_t;
+
+
+typedef struct {
+    ngx_open_file_t            *file;
+    ngx_http_log_script_t      *script;
+    time_t                      disk_full_time;
+    time_t                      error_log_time;
+    ngx_syslog_peer_t          *syslog_peer;
+    ngx_http_log_fmt_t         *format;
+    ngx_http_complex_value_t   *filter;
+} ngx_http_log_t;
+
+
+typedef struct {
+    ngx_array_t                *logs;       /* array of ngx_http_log_t */
+
+    ngx_open_file_cache_t      *open_file_cache;
+    time_t                      open_file_cache_valid;
+    ngx_uint_t                  open_file_cache_min_uses;
+
+    ngx_flag_t                  escape_non_ascii;
+
+    ngx_uint_t                  off;        /* unsigned  off:1 */
+} ngx_http_log_loc_conf_t;
+
+
+/* Only this struct is defined by this module */
+typedef struct {
+    ngx_array_t                *logs;       /* array of ngx_http_log_t */
+
+    ngx_uint_t                  off;        /* unsigned  off:1 */
 } ngx_http_upstream_log_loc_conf_t;
 
 
@@ -1627,10 +1698,6 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_http_upstream_log_loc_conf_t *prev = parent;
     ngx_http_upstream_log_loc_conf_t *conf = child;
-
-    ngx_http_log_t                     *log;
-    ngx_http_log_fmt_t                 *fmt;
-    ngx_http_log_main_conf_t           *lmcf;
 
     if (conf->logs || conf->off) {
         return NGX_CONF_OK;
