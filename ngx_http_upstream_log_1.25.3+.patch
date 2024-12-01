@@ -1,33 +1,3 @@
-diff --git a/src/http/modules/ngx_http_grpc_module.c b/src/http/modules/ngx_http_grpc_module.c
-index dfe49c5..ee39d91 100644
---- a/src/http/modules/ngx_http_grpc_module.c
-+++ b/src/http/modules/ngx_http_grpc_module.c
-@@ -916,6 +916,10 @@ ngx_http_grpc_create_request(ngx_http_request_t *r)
-                        "grpc header: \":method: %V\"", &r->method_name);
-     }
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    u->method_name = r->method_name;
-+#endif
-+
- #if (NGX_HTTP_SSL)
-     if (u->ssl) {
-         *b->last++ = ngx_http_v2_indexed(NGX_HTTP_V2_SCHEME_HTTPS_INDEX);
-diff --git a/src/http/modules/ngx_http_proxy_module.c b/src/http/modules/ngx_http_proxy_module.c
-index 4eb6931..2ae8c5f 100644
---- a/src/http/modules/ngx_http_proxy_module.c
-+++ b/src/http/modules/ngx_http_proxy_module.c
-@@ -1275,6 +1275,10 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
-         method = r->method_name;
-     }
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    u->method_name = method;
-+#endif
-+
-     ctx = ngx_http_get_module_ctx(r, ngx_http_proxy_module);
- 
-     if (method.len == 4
 diff --git a/src/http/ngx_http_upstream.c b/src/http/ngx_http_upstream.c
 index 2be233c..e52a78f 100644
 --- a/src/http/ngx_http_upstream.c
@@ -55,61 +25,6 @@ index 2be233c..e52a78f 100644
      }
  
      u->state = ngx_array_push(r->upstream_states);
-@@ -1555,6 +1564,17 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
- 
-     u->start_time = ngx_current_msec;
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    u->state->start_msec = ngx_current_msec;
-+
-+#if (NGX_HTTP_SSL)
-+    u->state->ssl_start_msec = (ngx_msec_t) -1;
-+#endif
-+
-+    u->state->send_start_msec = (ngx_msec_t) -1;
-+    u->state->send_end_msec = (ngx_msec_t) -1;
-+#endif
-+
-     u->state->response_time = (ngx_msec_t) -1;
-     u->state->connect_time = (ngx_msec_t) -1;
-     u->state->header_time = (ngx_msec_t) -1;
-@@ -1754,6 +1774,12 @@ ngx_http_upstream_ssl_init_connection(ngx_http_request_t *r,
-         }
-     }
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    if (u->state && u->state->ssl_start_msec == (ngx_msec_t) -1) {
-+        u->state->ssl_start_msec = ngx_current_msec;
-+    }
-+#endif
-+
-     r->connection->log->action = "SSL handshaking to upstream";
- 
-     rc = ngx_ssl_handshake(c);
-@@ -2108,6 +2134,12 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
-         return;
-     }
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    if (u->state->send_start_msec == (ngx_msec_t) -1) {
-+        u->state->send_start_msec = ngx_current_msec;
-+    }
-+#endif
-+
-     c->log->action = "sending request to upstream";
- 
-     rc = ngx_http_upstream_send_request_body(r, u, do_write);
-@@ -2161,6 +2193,10 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
-         ngx_del_timer(c->write);
-     }
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    u->state->send_end_msec = ngx_current_msec;
-+#endif
-+
-     if (c->tcp_nopush == NGX_TCP_NOPUSH_SET) {
-         if (ngx_tcp_push(c->fd) == -1) {
-             ngx_log_error(NGX_LOG_CRIT, c->log, ngx_socket_errno,
 @@ -4531,6 +4567,11 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
          if (u->peer.connection) {
              u->state->bytes_sent = u->peer.connection->sent;
@@ -122,37 +37,3 @@ index 2be233c..e52a78f 100644
      }
  
      u->finalize_request(r, rc);
-diff --git a/src/http/ngx_http_upstream.h b/src/http/ngx_http_upstream.h
-index 15a35d9..01ce3dc 100644
---- a/src/http/ngx_http_upstream.h
-+++ b/src/http/ngx_http_upstream.h
-@@ -62,6 +62,18 @@ typedef struct {
-     ngx_msec_t                       connect_time;
-     ngx_msec_t                       header_time;
-     ngx_msec_t                       queue_time;
-+
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    ngx_msec_t                       start_msec;
-+
-+#if (NGX_HTTP_SSL)
-+    ngx_msec_t                       ssl_start_msec;
-+#endif
-+
-+    ngx_msec_t                       send_start_msec;
-+    ngx_msec_t                       send_end_msec;
-+#endif
-+
-     off_t                            response_length;
-     off_t                            bytes_received;
-     off_t                            bytes_sent;
-@@ -381,6 +393,10 @@ struct ngx_http_upstream_s {
-     ngx_str_t                        schema;
-     ngx_str_t                        uri;
- 
-+#if (NGX_HTTP_UPSTREAM_LOG)
-+    ngx_str_t                        method_name;
-+#endif
-+
- #if (NGX_HTTP_SSL || NGX_COMPAT)
-     ngx_str_t                        ssl_name;
- #endif
