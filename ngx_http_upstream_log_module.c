@@ -71,6 +71,12 @@ typedef struct {
 
 
 typedef struct {
+    ngx_array_t                 formats;    /* array of ngx_http_log_fmt_t */
+    ngx_uint_t                  combined_used; /* unsigned  combined_used:1 */
+} ngx_http_log_main_conf_t;
+
+
+typedef struct {
     u_char                     *start;
     u_char                     *pos;
     u_char                     *last;
