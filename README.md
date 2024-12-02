@@ -94,7 +94,7 @@ The file path can contain variables, but such logs have some constraints:
 
 * the user whose credentials are used by worker processes should have permissions to create files in a directory with such logs;
 * buffered writes do not work;
-* the file is opened and closed for each log write. However, since the descriptors of frequently used files can be stored in a cache, writing to the old file can continue during the time specified by the upstream_open_log_file_cache directive’s valid parameter
+* the file is opened and closed for each log write. However, since the descriptors of frequently used files can be stored in a cache, writing to the old file can continue during the time specified by the open_log_file_cache directive’s valid parameter
 * during each log write the existence of the request’s root directory is checked, and if it does not exist the log is not created. It is thus a good idea to specify both root and upstream_log on the same configuration level:
 ```
 server {
@@ -102,10 +102,10 @@ server {
     upstream_log /spool/vhost/logs/$host;
     ...
 ```
-The if parameter enables conditional logging. A request will not be logged if the condition evaluates to “0” or an empty string. In the following example, the requests with response codes 2xx and 3xx will not be logged:
+The if parameter enables conditional logging. A request will not be logged if the condition evaluates to “0” or an empty string. In the following example, the last requests with response codes 2xx and 3xx will not be logged:
 ```
-map $upstream_log_status $upstream_loggable {
-    ~^[23]  0;
+map $upstream_status $upstream_loggable {
+    ~(?:^|:\s|,\s)[23][0-9]{2}  0;
     default 1;
 }
 
