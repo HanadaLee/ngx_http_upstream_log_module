@@ -93,7 +93,7 @@ typedef struct {
 typedef struct {
     ngx_array_t                *logs;       /* array of ngx_http_log_t */
 
-    ngx_flag_t                  off;
+    ngx_uint_t                  off;        /* unsigned  off:1 */
 } ngx_http_upstream_log_loc_conf_t;
 
 
@@ -184,7 +184,7 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
 
     ulcf = ngx_http_get_module_loc_conf(r, ngx_http_upstream_log_module);
 
-    if (ulcf->off) {
+    if (ulcf->off || !ulcf->logs) {
         return NGX_OK;
     }
 
@@ -695,9 +695,6 @@ ngx_http_upstream_log_create_loc_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    conf->off = NGX_CONF_UNSET;
-    conf->logs = NULL;
-
     return conf;
 }
 
@@ -708,18 +705,12 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_upstream_log_loc_conf_t *prev = parent;
     ngx_http_upstream_log_loc_conf_t *conf = child;
 
-    if (conf->off == 1) {
-        conf->logs = NULL;
+    if (conf->logs || conf->off) {
         return NGX_CONF_OK;
     }
 
-    if (conf->logs) {
-        conf->off = 0;
-        return NGX_CONF_OK;
-    }
-
-    ngx_conf_merge_value(conf->off, prev->off, 0);
     conf->logs = prev->logs;
+    conf->off = prev->off;
 
     return NGX_CONF_OK;
 }
