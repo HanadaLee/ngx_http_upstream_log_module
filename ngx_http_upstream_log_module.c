@@ -93,7 +93,7 @@ typedef struct {
 typedef struct {
     ngx_array_t                *logs;       /* array of ngx_http_log_t */
 
-    ngx_uint_t                  off;        /* unsigned  off:1 */
+    ngx_flag_t                  off;
 } ngx_http_upstream_log_loc_conf_t;
 
 
@@ -695,6 +695,9 @@ ngx_http_upstream_log_create_loc_conf(ngx_conf_t *cf)
         return NULL;
     }
 
+    conf->off = NGX_CONF_UNSET;
+    conf->logs = NULL;
+
     return conf;
 }
 
@@ -705,22 +708,18 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_upstream_log_loc_conf_t *prev = parent;
     ngx_http_upstream_log_loc_conf_t *conf = child;
 
-    if (conf->off) {
+    if (conf->off == 1) {
         conf->logs = NULL;
         return NGX_CONF_OK;
     }
 
     if (conf->logs) {
+        conf->off = 0;
         return NGX_CONF_OK;
     }
 
-    conf->off = prev->off;
-
-    if (conf->off) {
-        conf->logs = NULL;
-    } else {
-        conf->logs = prev->logs;
-    }
+    ngx_conf_merge_value(conf->off, prev->off, 0);
+    conf->logs = prev->logs;
 
     return NGX_CONF_OK;
 }
@@ -763,8 +762,6 @@ ngx_http_upstream_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
         }
     }
-
-    lmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_log_module);
 
     log = ngx_array_push(ulcf->logs);
     if (log == NULL) {
@@ -837,6 +834,8 @@ process_formats:
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "upstream log format is required but not set");
     }
+
+    lmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_log_module);
 
     fmt = lmcf->formats.elts;
     for (i = 0; i < lmcf->formats.nelts; i++) {
