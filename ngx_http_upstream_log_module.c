@@ -705,12 +705,22 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_upstream_log_loc_conf_t *prev = parent;
     ngx_http_upstream_log_loc_conf_t *conf = child;
 
-    if (conf->logs || conf->off) {
+    if (conf->off) {
+        conf->logs = NULL;
         return NGX_CONF_OK;
     }
 
-    conf->logs = prev->logs;
+    if (conf->logs) {
+        return NGX_CONF_OK;
+    }
+
     conf->off = prev->off;
+
+    if (conf->off) {
+        conf->logs = NULL;
+    } else {
+        conf->logs = prev->logs;
+    }
 
     return NGX_CONF_OK;
 }
