@@ -73,6 +73,9 @@ typedef struct {
     ngx_syslog_peer_t          *syslog_peer;
     ngx_http_log_fmt_t         *format;
     ngx_http_complex_value_t   *filter;
+#if (NGX_HTTP_EXT)
+    ngx_uint_t                  negative;
+#endif
 } ngx_http_log_t;
 
 
@@ -197,7 +200,17 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
             }
 
             if (val.len == 0 || (val.len == 1 && val.data[0] == '0')) {
+#if (NGX_HTTP_EXT)
+                if (!log[l].negative) {
+                    continue;
+                }
+            } else {
+                if (log[l].negative) {
+                    continue;
+                }
+#else
                 continue;
+#endif
             }
         }
 
@@ -913,9 +926,23 @@ process_formats:
 #endif
         }
 
+#if (NGX_HTTP_EXT)
+        if (ngx_strncmp(value[i].data, "if=", 3) == 0
+            || ngx_strncmp(value[i].data, "if!=", 4) == 0)
+        {
+            if (ngx_strncmp(value[i].data, "if=", 3) == 0) {
+                s.len = value[i].len - 3;
+                s.data = value[i].data + 3;
+            } else {
+                s.len = value[i].len - 4;
+                s.data = value[i].data + 4;
+                log->negative = 1;
+            }
+#else
         if (ngx_strncmp(value[i].data, "if=", 3) == 0) {
             s.len = value[i].len - 3;
             s.data = value[i].data + 3;
+#endif
 
             ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
 
