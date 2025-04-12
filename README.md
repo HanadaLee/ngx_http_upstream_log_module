@@ -9,7 +9,9 @@ Most of the work of this module originates from ngx_http_log_module.
 
 Unlike the access log module, it will be logged at the end of each upstream request. If several servers were contacted during request processing, an upstream log is recorded at the end of each contact. If an internal redirect from one server group to another happens, initiated by “X-Accel-Redirect” or error_page, an upstream log will also be recorded at the end of each contact.
 
-This module also provides a series of variables for upstream logging. Many of these variables start with $upstream_last_, which is used to distinguish them from the variables in ngx_http_upstream. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.
+~~This module also provides a series of variables for upstream logging. Many of these variables start with $upstream_last_, which is used to distinguish them from the variables in ngx_http_upstream. These variables only return information related to the current contact with the upstream, or information related to the last time the upstream was contacted. Commas and colons are not used to record information about multiple contacts with the upstream.~~
+
+Note: This module no longer exports any additional variables. Extra upstream variables have been moved to [ngx_http_extra_variables_module](https://git.hanada.info/hanada/ngx_http_extra_variables_module). 
 
 The usage of this module is very similar to ngx_http_log_module. just use the upstream_log directive to sets the path, format, and configuration for a buffered log write.
 
