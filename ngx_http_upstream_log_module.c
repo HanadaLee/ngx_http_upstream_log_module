@@ -100,11 +100,11 @@ typedef struct {
 } ngx_http_upstream_log_loc_conf_t;
 
 
-extern ngx_module_t          ngx_http_log_module;
+extern ngx_module_t  ngx_http_log_module;
 
 
-static void ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_log_t *log,
-    u_char *buf, size_t len);
+static void ngx_http_upstream_log_write(ngx_http_request_t *r,
+    ngx_http_log_t *log, u_char *buf, size_t len);
 static ssize_t ngx_http_upstream_log_script_write(ngx_http_request_t *r,
     ngx_http_log_script_t *script, u_char **name, u_char *buf, size_t len);
 
@@ -112,7 +112,8 @@ static ssize_t ngx_http_upstream_log_script_write(ngx_http_request_t *r,
 static ssize_t ngx_http_upstream_log_gzip(ngx_fd_t fd, u_char *buf, size_t len,
     ngx_int_t level, ngx_log_t *log);
 
-static void *ngx_http_upstream_log_gzip_alloc(void *opaque, u_int items, u_int size);
+static void *ngx_http_upstream_log_gzip_alloc(void *opaque, u_int items,
+    u_int size);
 static void ngx_http_upstream_log_gzip_free(void *opaque, void *address);
 #endif
 
@@ -136,7 +137,7 @@ static ngx_command_t ngx_http_upstream_log_commands[] = {
       0,
       NULL },
 
-    ngx_null_command
+      ngx_null_command
 };
 
 
@@ -171,7 +172,8 @@ ngx_module_t ngx_http_upstream_log_module = {
 };
 
 
-ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r) {
+ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
+{
     u_char                            *line, *p;
     size_t                             len, size;
     ssize_t                            n;
@@ -398,8 +400,8 @@ ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_log_t *log,
 
 
 static ssize_t
-ngx_http_upstream_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t *script,
-    u_char **name, u_char *buf, size_t len)
+ngx_http_upstream_log_script_write(ngx_http_request_t *r,
+    ngx_http_log_script_t *script, u_char **name, u_char *buf, size_t len)
 {
     size_t                              root;
     ssize_t                             n;
@@ -513,8 +515,8 @@ ngx_http_upstream_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t 
 #if (NGX_ZLIB)
 
 static ssize_t
-ngx_http_upstream_log_gzip(ngx_fd_t fd, u_char *buf, size_t len, ngx_int_t level,
-    ngx_log_t *log)
+ngx_http_upstream_log_gzip(ngx_fd_t fd, u_char *buf, size_t len,
+    ngx_int_t level, ngx_log_t *log)
 {
     int          rc, wbits, memlevel;
     u_char      *out;
@@ -661,7 +663,8 @@ ngx_http_upstream_log_flush(ngx_open_file_t *file, ngx_log_t *log)
 
 #if (NGX_ZLIB)
     if (buffer->gzip) {
-        n = ngx_http_upstream_log_gzip(file->fd, buffer->start, len, buffer->gzip, log);
+        n = ngx_http_upstream_log_gzip(file->fd, buffer->start, len,
+                                       buffer->gzip, log);
     } else {
         n = ngx_write_fd(file->fd, buffer->start, len);
     }
