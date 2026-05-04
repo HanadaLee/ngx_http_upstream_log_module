@@ -962,7 +962,7 @@ process_formats:
 
     if (flush && size == 0) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "no buffer is defined for access_log \"%V\"",
+                           "no buffer is defined for upstream_log \"%V\"",
                            &value[1]);
         return NGX_CONF_ERROR;
     }
@@ -989,7 +989,7 @@ process_formats:
                 || buffer->gzip != gzip)
             {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "access_log \"%V\" already defined "
+                                   "upstream_log \"%V\" already defined "
                                    "with conflicting parameters",
                                    &value[1]);
                 return NGX_CONF_ERROR;
