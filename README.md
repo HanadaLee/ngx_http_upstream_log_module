@@ -67,12 +67,16 @@ $ make
 $ make install
 ```
 
+To enable named conditions, add `--add-module=/path/to/ngx_condition_module` to the same static nginx build.
+
+Conditional syntax is selected at compile time. With `ngx_condition_module`, place `upstream_log` inside an `http`, `server`, or `location` `when` block; `if=` and `if!=` parameters are rejected. Without it, `when` is unavailable and legacy `if=`/`if!=` remain supported.
+
 # Directive
 
 ### upstream_log
-* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]]; upstream_log off;
+* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time]]; upstream_log off;
 * Default:	-;
-* Context:	http, server, location, if in location, limit_except
+* Context:	http, server, location, if in location, limit_except, http when, server when, location when
 
 Sets the path, format, and configuration for a buffered log write. Several logs can be specified on the same configuration level. Logging to syslog can be configured by specifying the “syslog:” prefix in the first parameter. The special value off cancels all upstream_log directives on the current level. Unlike the access_log directive, this directive does not accept the predefined "combined" format. You must first define the log format using the log_format directive and then reference it using this directive.
 
@@ -104,7 +108,17 @@ server {
     upstream_log /spool/vhost/logs/$host;
     ...
 ```
-The if parameter enables conditional logging. A request will not be logged if the condition evaluates to “0” or an empty string. In the following example, the last requests with response codes 2xx and 3xx will not be logged:
+With `ngx_condition_module`, define a named condition and put the log rule in a `when` block. `upstream_log off` is configuration-level state and is not allowed inside `when`:
+
+```nginx
+condition log_upstream_error str_regex_match $upstream_status '^[45]';
+
+when log_upstream_error {
+    upstream_log /path/to/upstream.log upstream;
+}
+```
+
+Without `ngx_condition_module`, the legacy parameter controls logging. `if=` logs when its value is non-empty and not `"0"`; `if!=` logs when its value is empty or `"0"`. In the following example, requests with response codes 2xx and 3xx will not be logged:
 ```
 map $upstream_status $upstream_loggable {
     ~(?:^|:\s|,\s)[23][0-9]{2}  0;

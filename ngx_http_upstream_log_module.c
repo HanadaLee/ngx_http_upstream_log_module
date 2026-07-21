@@ -8,6 +8,10 @@
 
 #include "ngx_http_upstream_log_module.h"
 
+#if (NGX_CONDITION)
+#include <ngx_http_condition_module.h>
+#endif
+
 #if (NGX_ZLIB)
 #include <zlib.h>
 #endif
@@ -72,8 +76,12 @@ typedef struct {
     time_t                      error_log_time;
     ngx_syslog_peer_t          *syslog_peer;
     ngx_http_log_fmt_t         *format;
+#if (NGX_CONDITION)
+    ngx_condition_expr_id_t     expr_id;
+#else
     ngx_http_complex_value_t   *filter;
     ngx_uint_t                  negative;
+#endif
 } ngx_http_log_t;
 
 
@@ -129,6 +137,10 @@ static ngx_command_t ngx_http_upstream_log_commands[] = {
 
     { ngx_string("upstream_log"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
+#if (NGX_CONDITION)
+                        |NGX_HTTP_MAIN_WHEN_CONF|NGX_HTTP_SRV_WHEN_CONF
+                        |NGX_HTTP_LOC_WHEN_CONF
+#endif
                         |NGX_HTTP_LMT_CONF|NGX_CONF_1MORE,
       ngx_http_upstream_log_set_log,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -175,7 +187,9 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
     u_char                            *line, *p;
     size_t                             len, size;
     ssize_t                            n;
+#if !(NGX_CONDITION)
     ngx_str_t                          val;
+#endif
     ngx_uint_t                         i, l;
     ngx_http_log_t                    *log;
     ngx_http_log_op_t                 *op;
@@ -194,6 +208,13 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
     log = ulcf->logs->elts;
     for (l = 0; l < ulcf->logs->nelts; l++) {
 
+#if (NGX_CONDITION)
+        if (ngx_http_condition_get_expr_result(r, log[l].expr_id)
+            != NGX_CONDITION_EXPR_HIT)
+        {
+            continue;
+        }
+#else
         if (log[l].filter) {
             if (ngx_http_complex_value(r, log[l].filter, &val) != NGX_OK) {
                 return NGX_ERROR;
@@ -210,6 +231,7 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
                 }
             }
         }
+#endif
 
         if (ngx_time() == log[l].disk_full_time) {
 
@@ -743,11 +765,22 @@ ngx_http_upstream_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_log_fmt_t                         *fmt;
     ngx_http_log_main_conf_t                   *lmcf;
     ngx_http_script_compile_t                   sc;
+#if !(NGX_CONDITION)
     ngx_http_compile_complex_value_t            ccv;
+#endif
 
     value = cf->args->elts;
 
     if (ngx_strcmp(value[1].data, "off") == 0) {
+#if (NGX_CONDITION)
+        if (ngx_condition_get_associated_expr_id(cf)
+            != NGX_CONDITION_NO_EXPR_ID)
+        {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "\"upstream_log off\" is not allowed in when");
+            return NGX_CONF_ERROR;
+        }
+#endif
         ulcf->off = 1;
         if (cf->args->nelts == 2) {
             return NGX_CONF_OK;
@@ -771,6 +804,10 @@ ngx_http_upstream_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     ngx_memzero(log, sizeof(ngx_http_log_t));
+
+#if (NGX_CONDITION)
+    log->expr_id = ngx_condition_get_associated_expr_id(cf);
+#endif
 
 
     if (ngx_strncmp(value[1].data, "syslog:", 7) == 0) {
@@ -924,6 +961,7 @@ process_formats:
 #endif
         }
 
+#if !(NGX_CONDITION)
         if (ngx_strncmp(value[i].data, "if=", 3) == 0
             || ngx_strncmp(value[i].data, "if!=", 4) == 0)
         {
@@ -954,6 +992,7 @@ process_formats:
 
             continue;
         }
+#endif
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "invalid parameter \"%V\"", &value[i]);
