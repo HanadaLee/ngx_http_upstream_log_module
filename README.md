@@ -69,7 +69,7 @@ $ make install
 
 To enable named conditions, add `--add-module=/path/to/ngx_condition_module` to the same static nginx build.
 
-Conditional syntax is selected at compile time. With `ngx_condition_module`, place `upstream_log` inside an `http`, `server`, or `location` `when` block; `if=` and `if!=` parameters are rejected. Without it, `when` is unavailable and legacy `if=`/`if!=` remain supported.
+Conditional syntax is selected at compile time. With `ngx_condition_module`, place `upstream_log` inside an `http`, `server`, or `location` `when` block; `if=` parameters are rejected. Without it, `when` is unavailable and legacy `if=` remain supported.
 
 # Directive
 
@@ -78,7 +78,8 @@ Conditional syntax is selected at compile time. With `ngx_condition_module`, pla
 * Default:	-;
 * Context:	http, server, location, if in location, limit_except, http when, server when, location when
 
-Sets the path, format, and configuration for a buffered log write. Several logs can be specified on the same configuration level. Logging to syslog can be configured by specifying the “syslog:” prefix in the first parameter. The special value off cancels all upstream_log directives on the current level. Unlike the access_log directive, this directive does not accept the predefined "combined" format. You must first define the log format using the log_format directive and then reference it using this directive.
+Sets the path, format, and configuration for a buffered log write. Several logs can be specified on the same configuration level. Logging to syslog can be configured by specifying the “syslog:” prefix in the first parameter. The special value off cancels subsequent upstream_log directives on the current level.
+Unlike the access_log directive, this directive does not accept the predefined "combined" format. You must first define the log format using the log_format directive and then reference it using this directive.
 
 If either the buffer or gzip parameter is used, writes to log will be buffered.
 
@@ -108,7 +109,7 @@ server {
     upstream_log /spool/vhost/logs/$host;
     ...
 ```
-With `ngx_condition_module`, define a named condition and put the log rule in a `when` block. `upstream_log off` is configuration-level state and is not allowed inside `when`:
+With `ngx_condition_module`, define a named condition and put the log rule in a `when` block:
 
 ```nginx
 condition log_upstream_error str_regex_match $upstream_status '^[45]';
@@ -118,7 +119,17 @@ when log_upstream_error {
 }
 ```
 
-Without `ngx_condition_module`, the legacy parameter controls logging. `if=` logs when its value is non-empty and not `"0"`; `if!=` logs when its value is empty or `"0"`. In the following example, requests with response codes 2xx and 3xx will not be logged:
+In this build, every `upstream_log off` directive is stored as an ordered log
+entry. Outside `when` it is unconditional; inside `when` it carries the block's
+condition. A matching `off` stops processing subsequent upstream log entries,
+while entries already processed before it are retained. If the current scope
+contains any local entry, including `off`, it replaces the inherited array;
+otherwise the complete parent array is inherited.
+
+Without `ngx_condition_module`, `upstream_log off` keeps its legacy scope-wide
+behavior. The legacy parameter also controls logging: `if=` logs when its value
+is non-empty and not `"0"`. In the
+following example, requests with response codes 2xx and 3xx will not be logged:
 ```
 map $upstream_status $upstream_loggable {
     ~(?:^|:\s|,\s)[23][0-9]{2}  0;
