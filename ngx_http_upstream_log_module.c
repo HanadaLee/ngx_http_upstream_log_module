@@ -18,7 +18,7 @@
 
 
  /*
- * Types defined in this file was completely copy from ngx_http_log_module, 
+ * Types defined in this file was completely copy from ngx_http_log_module,
  * if them changes in the future, please update codes here.
  */
 
@@ -159,14 +159,14 @@ static ngx_http_module_t  ngx_http_upstream_log_module_ctx = {
     NULL,                                           /* preconfiguration */
     NULL,                                           /* postconfiguration */
 
-    NULL,                                           /* create main configuration */
-    NULL,                                           /* init main configuration */
+    NULL,                                           /* create main conf */
+    NULL,                                           /* init main conf */
 
-    NULL,                                           /* create server configuration */
-    NULL,                                           /* merge server configuration */
+    NULL,                                           /* create server conf */
+    NULL,                                           /* merge server conf */
 
-    ngx_http_upstream_log_create_loc_conf,          /* create location configuration */
-    ngx_http_upstream_log_merge_loc_conf            /* merge location configuration */
+    ngx_http_upstream_log_create_loc_conf,          /* create location conf */
+    ngx_http_upstream_log_merge_loc_conf            /* merge location conf */
 };
 
 
@@ -283,7 +283,7 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
             if (len > (size_t) (buffer->last - buffer->pos)) {
 
                 ngx_http_upstream_log_write(r, &log[l], buffer->start,
-                                   buffer->pos - buffer->start);
+                                            buffer->pos - buffer->start);
 
                 buffer->pos = buffer->start;
             }
@@ -376,8 +376,9 @@ ngx_http_upstream_log_write(ngx_http_request_t *r, ngx_http_log_t *log,
         buffer = log->file->data;
 
         if (buffer && buffer->gzip) {
-            n = ngx_http_upstream_log_gzip(log->file->fd, buf, len, buffer->gzip,
-                                  r->connection->log);
+            n = ngx_http_upstream_log_gzip(log->file->fd, buf, len,
+                                           buffer->gzip, r->connection->log);
+
         } else {
             n = ngx_write_fd(log->file->fd, buf, len);
         }
@@ -689,6 +690,7 @@ ngx_http_upstream_log_flush(ngx_open_file_t *file, ngx_log_t *log)
     if (buffer->gzip) {
         n = ngx_http_upstream_log_gzip(file->fd, buffer->start, len,
                                        buffer->gzip, log);
+
     } else {
         n = ngx_write_fd(file->fd, buffer->start, len);
     }
