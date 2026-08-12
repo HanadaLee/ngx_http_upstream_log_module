@@ -25,6 +25,10 @@
 typedef struct ngx_http_log_op_s  ngx_http_log_op_t;
 
 typedef u_char *(*ngx_http_log_op_run_pt) (ngx_http_request_t *r, u_char *buf,
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+    u_char *end,
+#endif
     ngx_http_log_op_t *op);
 
 typedef size_t (*ngx_http_log_op_getlen_pt) (ngx_http_request_t *r,
@@ -189,6 +193,10 @@ ngx_module_t ngx_http_upstream_log_module = {
 ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
 {
     u_char                            *line, *p;
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+    u_char                            *end;
+#endif
     size_t                             len, size;
     ssize_t                            n;
 #if !(NGX_RESTY_EXT && NGX_CONDITION)
@@ -264,6 +272,11 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
             }
         }
 
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+        len += NGX_LINEFEED_SIZE;
+#endif
+
         if (log[l].syslog_peer) {
 
             /* length of syslog's PRI and HEADER message parts */
@@ -274,7 +287,10 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
             goto alloc_line;
         }
 
+#if !(nginx_version >= 1031003                                               \
+      || (nginx_version >= 1030004 && nginx_version < 1031000))
         len += NGX_LINEFEED_SIZE;
+#endif
 
         buffer = log[l].file ? log[l].file->data : NULL;
 
@@ -292,13 +308,29 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
 
                 p = buffer->pos;
 
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+                end = p + len - NGX_LINEFEED_SIZE;
+#endif
+
                 if (buffer->event && p == buffer->start) {
                     ngx_add_timer(buffer->event, buffer->flush);
                 }
 
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+                for (i = 0; i < log[l].format->ops->nelts && p; i++) {
+                    p = op[i].run(r, p, end, &op[i]);
+                }
+
+                if (p == NULL) {
+                    return NGX_ERROR;
+                }
+#else
                 for (i = 0; i < log[l].format->ops->nelts; i++) {
                     p = op[i].run(r, p, &op[i]);
                 }
+#endif
 
                 ngx_linefeed(p);
 
@@ -321,13 +353,29 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
 
         p = line;
 
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+        end = line + len - NGX_LINEFEED_SIZE;
+#endif
+
         if (log[l].syslog_peer) {
             p = ngx_syslog_add_header(log[l].syslog_peer, line);
         }
 
+#if (nginx_version >= 1031003                                                \
+     || (nginx_version >= 1030004 && nginx_version < 1031000))
+        for (i = 0; i < log[l].format->ops->nelts && p; i++) {
+            p = op[i].run(r, p, end, &op[i]);
+        }
+
+        if (p == NULL) {
+            return NGX_ERROR;
+        }
+#else
         for (i = 0; i < log[l].format->ops->nelts; i++) {
             p = op[i].run(r, p, &op[i]);
         }
+#endif
 
         if (log[l].syslog_peer) {
 
