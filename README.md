@@ -67,9 +67,9 @@ $ make
 $ make install
 ```
 
-To enable named conditions, add `--add-module=/path/to/ngx_condition_module` to the same static nginx build.
+To enable named conditions, add `--add-module=/path/to/ngx_expr_module` to the same static nginx build.
 
-Conditional syntax is selected at compile time. With `ngx_condition_module`, place `upstream_log` inside an `http`, `server`, or `location` `when` block; `if=` parameters are rejected. Without it, `when` is unavailable and legacy `if=` remain supported.
+Conditional syntax is selected at compile time. With `ngx_expr_module`, place `upstream_log` inside an `http`, `server`, or `location` `when` block; `if=` parameters are rejected. Without it, `when` is unavailable and legacy `if=` remain supported.
 
 # Directive
 
@@ -109,10 +109,10 @@ server {
     upstream_log /spool/vhost/logs/$host;
     ...
 ```
-With `ngx_condition_module`, define a named condition and put the log rule in a `when` block:
+With `ngx_expr_module`, define a named condition and put the log rule in a `when` block:
 
 ```nginx
-condition log_upstream_error str_regex_match $upstream_status '^[45]';
+expr log_upstream_error str_regex_match $upstream_status '^[45]';
 
 when log_upstream_error {
     upstream_log /path/to/upstream.log upstream;
@@ -126,7 +126,7 @@ while entries already processed before it are retained. If the current scope
 contains any local entry, including `off`, it replaces the inherited array;
 otherwise the complete parent array is inherited.
 
-Without `ngx_condition_module`, `upstream_log off` keeps its legacy scope-wide
+Without `ngx_expr_module`, `upstream_log off` keeps its legacy scope-wide
 behavior. The legacy parameter also controls logging: `if=` logs when its value
 is non-empty and not `"0"`. In the
 following example, requests with response codes 2xx and 3xx will not be logged:

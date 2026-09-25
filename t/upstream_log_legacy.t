@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Tests for upstream_log without ngx_condition_module.
+# Tests for upstream_log without ngx_expr_module.
 
 ###############################################################################
 
@@ -22,7 +22,7 @@ my $t = Test::Nginx->new()->has(qw/http proxy
 	ngx_http_upstream_log_module/);
 
 plan(skip_all => 'legacy upstream_log build required')
-	if $t->has_module('ngx_condition_module');
+	if $t->has_module('ngx_expr_module');
 
 $t->plan(8);
 

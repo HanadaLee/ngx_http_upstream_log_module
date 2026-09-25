@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Tests for upstream_log with ngx_condition_module.
+# Tests for upstream_log with ngx_expr_module.
 
 ###############################################################################
 
@@ -18,7 +18,7 @@ use Test::Nginx qw/ :DEFAULT /;
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
-my $t = Test::Nginx->new()->has(qw/http proxy ngx_condition_module
+my $t = Test::Nginx->new()->has(qw/http proxy ngx_expr_module
 	ngx_http_upstream_log_module/)->plan(19);
 
 $t->write_file_expand('nginx.conf', <<'EOF');
@@ -57,9 +57,9 @@ http {
         listen       127.0.0.1:8080;
         server_name  localhost;
 
-        condition selected str_eq $arg_log yes;
-        condition stop str_eq $arg_stop yes;
-        condition upstream_error str_regex_match $upstream_status '^5';
+        expr selected str_eq $arg_log yes;
+        expr stop str_eq $arg_stop yes;
+        expr upstream_error str_regex_match $upstream_status '^5';
 
         location = /basic {
             upstream_log %%TESTDIR%%/basic.log upstream_test;
