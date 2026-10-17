@@ -104,10 +104,12 @@ typedef struct {
 
 
 /* Only this struct is defined by this module */
-typedef struct {
+typedef struct ngx_http_upstream_log_loc_conf_s {
     ngx_array_t                *logs;       /* array of ngx_http_log_t */
 
-#if !(NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_RESTY_EXT && NGX_EXPR)
+    struct ngx_http_upstream_log_loc_conf_s  *parent;
+#else
     ngx_uint_t                  off;        /* unsigned  off:1 */
 #endif
 } ngx_http_upstream_log_loc_conf_t;
@@ -204,21 +206,35 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
     ngx_http_log_op_t                 *op;
     ngx_http_log_buf_t                *buffer;
     ngx_http_upstream_log_loc_conf_t  *ulcf;
+#if (NGX_RESTY_EXT && NGX_EXPR)
+    ngx_uint_t                         matched;
+#endif
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http upstream log handler");
 
     ulcf = ngx_http_get_module_loc_conf(r, ngx_http_upstream_log_module);
 
-#if !(NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_RESTY_EXT && NGX_EXPR)
+next_level:
+
+    while (ulcf && ulcf->logs == NULL) {
+        ulcf = ulcf->parent;
+    }
+
+    if (ulcf == NULL) {
+        return NGX_OK;
+    }
+
+    matched = 0;
+#else
     if (ulcf->off) {
         return NGX_OK;
     }
-#endif
-
     if (!ulcf->logs) {
         return NGX_OK;
     }
+#endif
 
     log = ulcf->logs->elts;
     for (l = 0; l < ulcf->logs->nelts; l++) {
@@ -228,6 +244,9 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
         {
             continue;
         }
+
+        /* A matching entry selects this level even if if= skips it. */
+        matched = 1;
 
         if (log[l].off) {
             return NGX_OK;
@@ -396,6 +415,13 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
 
         ngx_http_upstream_log_write(r, &log[l], line, p - line);
     }
+
+#if (NGX_RESTY_EXT && NGX_EXPR)
+    if (!matched) {
+        ulcf = ulcf->parent;
+        goto next_level;
+    }
+#endif
 
     return NGX_OK;
 }
@@ -792,11 +818,7 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_upstream_log_loc_conf_t *conf = child;
 
 #if (NGX_RESTY_EXT && NGX_EXPR)
-    if (conf->logs) {
-        return NGX_CONF_OK;
-    }
-
-    conf->logs = prev->logs;
+    conf->parent = prev;
 #else
     if (conf->logs || conf->off) {
         return NGX_CONF_OK;

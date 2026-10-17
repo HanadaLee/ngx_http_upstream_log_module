@@ -127,8 +127,14 @@ In this build, every `upstream_log off` directive is stored as an ordered log
 entry. Outside `when` it is unconditional; inside `when` it carries the block's
 condition. A matching `off` stops processing subsequent upstream log entries,
 while entries already processed before it are retained. If the current scope
-contains any local entry, including `off`, it replaces the inherited array;
-otherwise the complete parent array is inherited.
+has an unconditional entry or an entry whose `when` condition matches, its
+matching entries replace the inherited list. Otherwise, the nearest parent
+level with matching entries is used. This selection is repeated for each
+upstream contact using the current expression definitions.
+
+The `if=` parameter filters individual entries after the configuration level
+has been selected. A false `if=` value, a matching `off`, or a write failure
+does not cause logging to fall back to a parent level.
 
 Without `ngx_expr_module`, `upstream_log off` keeps its legacy scope-wide
 behavior.
