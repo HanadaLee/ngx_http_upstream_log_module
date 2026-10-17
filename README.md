@@ -69,12 +69,16 @@ $ make install
 
 To enable named conditions, add `--add-module=/path/to/ngx_expr_module` to the same static nginx build.
 
-Conditional syntax is selected at compile time. With `ngx_expr_module`, place `upstream_log` inside an `http`, `server`, or `location` `when` block; `if=` parameters are rejected. Without it, `when` is unavailable and legacy `if=` remain supported.
+The `if=` parameter is available with or without `ngx_expr_module`. Logging is
+skipped if its value is empty or equal to `0`. With `ngx_expr_module`,
+`upstream_log` can also be placed inside an `http`, `server`, or `location`
+`when` block. If both are specified, the `when` condition must match and the
+`if=` value must permit logging. The `if!=` parameter is not supported.
 
 # Directive
 
 ### upstream_log
-* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time]]; upstream_log off;
+* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]]; upstream_log off;
 * Default:	-;
 * Context:	http, server, location, if in location, limit_except, http when, server when, location when
 
@@ -127,9 +131,11 @@ contains any local entry, including `off`, it replaces the inherited array;
 otherwise the complete parent array is inherited.
 
 Without `ngx_expr_module`, `upstream_log off` keeps its legacy scope-wide
-behavior. The legacy parameter also controls logging: `if=` logs when its value
-is non-empty and not `"0"`. In the
-following example, requests with response codes 2xx and 3xx will not be logged:
+behavior.
+
+The `if=` parameter can be used independently of `when`, with or without
+`ngx_expr_module`. In the following example, requests with response codes 2xx
+and 3xx will not be logged:
 ```
 map $upstream_status $upstream_loggable {
     ~(?:^|:\s|,\s)[23][0-9]{2}  0;

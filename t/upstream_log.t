@@ -18,8 +18,8 @@ use Test::Nginx qw/ :DEFAULT /;
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
-my $t = Test::Nginx->new()->has(qw/http proxy ngx_expr_module
-	ngx_http_upstream_log_module/)->plan(19);
+my $t = Test::Nginx->new()->has(qw/http proxy rewrite ngx_expr_module
+	ngx_http_upstream_log_module/)->plan(31);
 
 $t->write_file_expand('nginx.conf', <<'EOF');
 
@@ -89,6 +89,14 @@ http {
             }
 
             upstream_log %%TESTDIR%%/ordered-after.log upstream_test;
+            proxy_pass http://127.0.0.1:8081;
+        }
+
+        location = /if {
+            upstream_log %%TESTDIR%%/if.log upstream_test if=$arg_gate;
+            when selected {
+                upstream_log %%TESTDIR%%/when-if.log upstream_test if=$arg_gate;
+            }
             proxy_pass http://127.0.0.1:8081;
         }
 
@@ -211,6 +219,42 @@ like($retry[0], qr{^/retry\|retry\|502$},
 	'failed upstream contact is logged');
 like($retry[1], qr{^/retry\|retry\|502, 200$},
 	'successful retry contact is logged');
+
+my ($plain, $combined) = ('', '');
+for my $case (
+	['one', 'yes', '1', 1],
+	['zero', 'yes', '0', 0],
+	['empty', 'yes', '', 0],
+	['miss', 'no', '1', 1],
+	['zeros', 'yes', '00', 1],
+	['word', 'yes', 'false', 1],
+) {
+	my ($id, $selected, $gate, $enabled) = @$case;
+	like(response("/if?id=$id&log=$selected&gate=$gate", 8080),
+		qr/^HTTP\/1\.1 200 /, "if= request $id succeeds");
+	$plain .= "/if|$id|200\n" if $enabled;
+	$combined .= "/if|$id|200\n" if $enabled && $selected eq 'yes';
+}
+$t->stop();
+is($t->read_file('if.log'), $plain, 'if= uses standard truth values with expr');
+is($t->read_file('when-if.log'), $combined, 'when and if= must both match');
+
+for my $wrapped (0, 1) {
+	my $line = 'upstream_log %%TESTDIR%%/invalid.log combined if!=1;';
+	$line = "when selected { $line }" if $wrapped;
+	$t->write_file_expand('nginx.conf', <<EOF);
+%%TEST_GLOBALS%%
+daemon off;
+events {}
+http {
+    expr selected bool true;
+    $line
+}
+EOF
+	my $output = $t->dump_config();
+	isnt($?, 0, "if!= is rejected, when=$wrapped");
+	like($output, qr/invalid parameter "if!=1"/, 'unsupported parameter diagnostic');
+}
 
 ###############################################################################
 
