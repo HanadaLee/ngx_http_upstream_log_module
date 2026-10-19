@@ -78,7 +78,7 @@ skipped if its value is empty or equal to `0`. With `ngx_expr_module`,
 # Directive
 
 ### upstream_log
-* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]]; upstream_log off;
+* Syntax:	upstream_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition] [sample=number]]; upstream_log off;
 * Default:	-;
 * Context:	http, server, location, if in location, limit_except, http when, server when, location when
 
@@ -132,9 +132,10 @@ matching entries replace the inherited list. Otherwise, the nearest parent
 level with matching entries is used. This selection is repeated for each
 upstream contact using the current expression definitions.
 
-The `if=` parameter filters individual entries after the configuration level
-has been selected. A false `if=` value, a matching `off`, or a write failure
-does not cause logging to fall back to a parent level.
+The `if=` and `sample=` parameters filter individual entries after the
+configuration level has been selected. A false `if=` value, a sampling miss,
+a matching `off`, or a write failure does not cause logging to fall back to a
+parent level.
 
 Without `ngx_expr_module`, `upstream_log off` keeps its legacy scope-wide
 behavior.
@@ -150,6 +151,30 @@ map $upstream_status $upstream_loggable {
 
 upstream_log /path/to/upstream.log upstream if=$upstream_loggable;
 ```
+
+The optional `sample=` parameter accepts an integer from `0` to `2147483647`,
+including variables and complex values. Omission or `sample=1` logs every
+eligible upstream contact; `sample=0` skips this destination. For `sample=N`
+with `N > 1`, each eligible contact is independently retained with probability
+`1/N`. Sampling is random, so it does not guarantee exactly one entry in every
+consecutive group of `N` contacts. Separate destinations and retry attempts
+are sampled independently.
+
+```nginx
+map $host $upstream_sample {
+    default 20;
+    important.example.com 1;
+}
+
+upstream_log /path/to/upstream.log upstream sample=$upstream_sample;
+```
+
+Sampling runs after `when` and `if=`. Literal values are validated during
+configuration parsing, and duplicate `sample=` parameters are rejected.
+Variable values are evaluated for each eligible upstream contact; an empty,
+non-integer, negative, or out-of-range value logs an error and skips only that
+destination. Other upstream log entries continue to be processed. The
+parameter works with or without `ngx_expr_module`.
 
 # Authors
 
