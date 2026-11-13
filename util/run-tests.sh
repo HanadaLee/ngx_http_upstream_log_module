@@ -37,8 +37,17 @@ patch -d "$nginx_source" -p1 --forward < "$module_root/ngx_http_upstream_log_1.2
 configure_args+=(--add-module="$module_root")
 
 cd "$nginx_source"
-sh ./configure "${configure_args[@]}"
+configure=./configure
+[[ -f "$configure" ]] || configure=auto/configure
+sh "$configure" "${configure_args[@]}"
 make -j"$build_jobs"
+
+export TEST_NGINX_UPSTREAM_EXPR=0
+if grep -q '^#define NGX_RESTY_EXT  *1$' objs/ngx_auto_config.h \
+    && grep -q '^#define NGX_EXPR  *1$' objs/ngx_auto_config.h
+then
+    export TEST_NGINX_UPSTREAM_EXPR=1
+fi
 
 export TEST_NGINX_BINARY="$nginx_source/objs/nginx"
 export PERL5LIB="$module_root/.ci/nginx-tests/lib"

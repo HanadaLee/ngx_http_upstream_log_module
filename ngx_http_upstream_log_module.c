@@ -8,7 +8,7 @@
 
 #include "ngx_http_upstream_log_module.h"
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
 #include <ngx_http_expr_module.h>
 #endif
 
@@ -80,7 +80,7 @@ typedef struct {
     time_t                      error_log_time;
     ngx_syslog_peer_t          *syslog_peer;
     ngx_http_log_fmt_t         *format;
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
     ngx_flag_t                  off;
     ngx_expr_when_id_t          expr_id;
 #endif
@@ -98,7 +98,7 @@ typedef struct {
 
     ngx_flag_t                  escape_non_ascii;
 
-#if !(NGX_RESTY_EXT && NGX_EXPR)
+#if !(NGX_EXPR)
     ngx_uint_t                  off;        /* unsigned  off:1 */
 #endif
 } ngx_http_log_loc_conf_t;
@@ -108,7 +108,7 @@ typedef struct {
 typedef struct ngx_http_upstream_log_loc_conf_s {
     ngx_array_t                *logs;       /* array of ngx_http_log_t */
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
     struct ngx_http_upstream_log_loc_conf_s  *parent;
 #else
     ngx_uint_t                  off;        /* unsigned  off:1 */
@@ -150,7 +150,7 @@ static ngx_command_t ngx_http_upstream_log_commands[] = {
 
     { ngx_string("upstream_log"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
                         |NGX_HTTP_MAIN_WHEN_CONF|NGX_HTTP_SRV_WHEN_CONF
                         |NGX_HTTP_LOC_WHEN_CONF
 #endif
@@ -210,7 +210,7 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
     ngx_http_log_op_t                 *op;
     ngx_http_log_buf_t                *buffer;
     ngx_http_upstream_log_loc_conf_t  *ulcf;
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
     ngx_uint_t                         matched;
 #endif
 
@@ -219,7 +219,7 @@ ngx_int_t ngx_http_upstream_log_handler(ngx_http_request_t *r)
 
     ulcf = ngx_http_get_module_loc_conf(r, ngx_http_upstream_log_module);
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
 next_level:
 
     while (ulcf && ulcf->logs == NULL) {
@@ -243,9 +243,8 @@ next_level:
     log = ulcf->logs->elts;
     for (l = 0; l < ulcf->logs->nelts; l++) {
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
-        if (ngx_http_expr_get_result(r, log[l].expr_id) != NGX_EXPR_WHEN_HIT)
-        {
+#if (NGX_EXPR)
+        if (ngx_http_expr_get_result(r, log[l].expr_id) != NGX_EXPR_WHEN_HIT) {
             continue;
         }
 
@@ -424,7 +423,7 @@ next_level:
         ngx_http_upstream_log_write(r, &log[l], line, p - line);
     }
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
     if (!matched) {
         ulcf = ulcf->parent;
         goto next_level;
@@ -866,7 +865,7 @@ ngx_http_upstream_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_upstream_log_loc_conf_t *prev = parent;
     ngx_http_upstream_log_loc_conf_t *conf = child;
 
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
     conf->parent = prev;
 #else
     if (conf->logs || conf->off) {
@@ -902,7 +901,7 @@ ngx_http_upstream_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     if (ngx_strcmp(value[1].data, "off") == 0) {
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
         if (cf->args->nelts != 2) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "invalid parameter \"%V\"", &value[2]);
@@ -952,7 +951,7 @@ ngx_http_upstream_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     ngx_memzero(log, sizeof(ngx_http_log_t));
-#if (NGX_RESTY_EXT && NGX_EXPR)
+#if (NGX_EXPR)
     log->expr_id = ngx_expr_get_associated_when_id(cf);
 #endif
 

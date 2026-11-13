@@ -7,7 +7,7 @@ on:
     inputs:
       nginx_ref:
         description: nginx-ext branch, tag or commit
-        default: '1.31.7'
+        default: '1.31.8'
         required: true
         type: string
 
@@ -26,6 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        source: [nginx, nginx-ext]
         expr: [enabled, disabled]
     steps:
       - name: Check out module
@@ -36,8 +37,8 @@ jobs:
       - name: Check out nginx-ext
         uses: actions/checkout@v6
         with:
-          repository: HanadaLee/nginx-ext
-          ref: ${{ inputs.nginx_ref || '1.31.7' }}
+          repository: ${{ matrix.source == 'nginx' && 'nginx/nginx' || 'HanadaLee/nginx-ext' }}
+          ref: ${{ matrix.source == 'nginx' && 'release-1.31.8' || inputs.nginx_ref || '1.31.8' }}
           path: .ci/nginx
           persist-credentials: false
 
@@ -76,7 +77,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: test-logs-${{ matrix.expr }}
+          name: test-logs-${{ matrix.expr }}-${{ matrix.source }}
           path: |
             .ci/test-output/**/*.log
             .ci/test-output/run.log

@@ -142,6 +142,10 @@ http {
 }
 EOF
 
+unless ($ENV{TEST_NGINX_UPSTREAM_EXPR}) {
+    $config =~ s/when child_selected \{\s*(access_log[^;]+;)\s*\}/$1/;
+}
+
 $t->write_file_expand('nginx.conf', $config);
 $t->run();
 
