@@ -1,3 +1,8 @@
+if [ "$ngx_module_link" = DYNAMIC ]; then
+    echo "$0: error: ngx_http_upstream_log_module must be built with --add-module"
+    exit 1
+fi
+
 ngx_feature="ngx_http_upstream_log_module"
 ngx_feature_name=
 ngx_feature_run=no

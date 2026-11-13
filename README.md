@@ -53,6 +53,8 @@ This Nginx module is currently considered experimental. Issues and PRs are welco
 
 # Installation
 
+Build with `--add-module`. Dynamic modules are not supported.
+
 In order to use this module, you must patch nginx firstly. Then configure your nginx branch with --add-module=/path/to/ngx_http_upstream_log_module
 
 ```

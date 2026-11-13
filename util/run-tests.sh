@@ -39,6 +39,14 @@ configure_args+=(--add-module="$module_root")
 cd "$nginx_source"
 configure=./configure
 [[ -f "$configure" ]] || configure=auto/configure
+dynamic_args=("${configure_args[@]}")
+dynamic_args[${#dynamic_args[@]}-1]="--add-dynamic-module=$module_root"
+if sh "$configure" "${dynamic_args[@]}" > "$test_output/dynamic-rejected.log" 2>&1; then
+    echo 'configure unexpectedly accepted a dynamic module'
+    exit 1
+fi
+grep -F 'ngx_http_upstream_log_module must be built with --add-module' "$test_output/dynamic-rejected.log"
+
 sh "$configure" "${configure_args[@]}"
 make -j"$build_jobs"
 
