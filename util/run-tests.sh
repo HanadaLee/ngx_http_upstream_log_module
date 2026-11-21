@@ -51,7 +51,7 @@ sh "$configure" "${configure_args[@]}"
 make -j"$build_jobs"
 
 export TEST_NGINX_UPSTREAM_EXPR=0
-if grep -q '^#define NGX_RESTY_EXT  *1$' objs/ngx_auto_config.h \
+if grep -q '^#define NGX_EXT  *1$' objs/ngx_auto_config.h \
     && grep -q '^#define NGX_EXPR  *1$' objs/ngx_auto_config.h
 then
     export TEST_NGINX_UPSTREAM_EXPR=1

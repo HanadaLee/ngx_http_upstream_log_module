@@ -7,7 +7,7 @@ on:
     inputs:
       nginx_ref:
         description: nginx-ext branch, tag or commit
-        default: '1.31.8'
+        default: '1.31.9'
         required: true
         type: string
 
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: ${{ matrix.source == 'nginx' && 'nginx/nginx' || 'HanadaLee/nginx-ext' }}
-          ref: ${{ matrix.source == 'nginx' && 'release-1.31.8' || inputs.nginx_ref || '1.31.8' }}
+          ref: ${{ matrix.source == 'nginx' && 'release-1.31.8' || inputs.nginx_ref || '1.31.9' }}
           path: .ci/nginx
           persist-credentials: false
 
